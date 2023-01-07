@@ -1,13 +1,19 @@
 package net.defade.amestify.ui.gui;
 
+import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.ui.AmestifyWindow;
 import org.jdesktop.swingx.prompt.PromptSupport;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -15,8 +21,11 @@ import javax.swing.text.NumberFormatter;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.text.NumberFormat;
+import java.util.concurrent.CompletableFuture;
 
 public class MongoDbLoginGUI extends JPanel {
     private final JTextField hostField = new JTextField();
@@ -26,7 +35,7 @@ public class MongoDbLoginGUI extends JPanel {
     private final JPasswordField passwordField = new JPasswordField();
     private final JButton buttonField = new JButton();
 
-    public MongoDbLoginGUI() {
+    public MongoDbLoginGUI(AmestifyWindow amestifyWindow, MongoConnector mongoConnector) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         Box globalBox = Box.createVerticalBox();
@@ -99,7 +108,48 @@ public class MongoDbLoginGUI extends JPanel {
         add(verticalBox);
 
         buttonField.addActionListener(actionEvent -> {
-            // TODO: Connect to MongoDB
+            buttonField.setEnabled(false);
+
+            JDialog connectingDialog = new JDialog((Frame) null, "Connecting...");
+            connectingDialog.setLayout(new FlowLayout(FlowLayout.CENTER));
+            connectingDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+            connectingDialog.setSize(300, 100);
+            connectingDialog.setPreferredSize(new Dimension(300, 100));
+            connectingDialog.setResizable(false);
+            connectingDialog.setVisible(true);
+
+            Box connectingBox = Box.createVerticalBox();
+
+            JLabel connectingLabel = new JLabel("Connecting to MongoDB...");
+            connectingLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
+            connectingBox.add(connectingLabel);
+            connectingLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+            JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL);
+            progressBar.setIndeterminate(true);
+            connectingBox.add(progressBar);
+
+            connectingDialog.add(connectingBox);
+
+            CompletableFuture<Void> future = mongoConnector.connect(
+                    hostField.getText().isBlank() ? "localhost" : hostField.getText(),
+                    portField.getText().isBlank() ? 27017 : Integer.parseInt(portField.getText()),
+                    usernameField.getText().isBlank() ? "Defade" : usernameField.getText(),
+                    passwordField.getPassword(),
+                    databaseField.getText().isBlank() ? "defade" : databaseField.getText()
+            );
+
+            future.whenComplete((unused, throwable) -> {
+                if(throwable != null) {
+                    connectingDialog.dispose();
+                    JOptionPane.showMessageDialog(amestifyWindow, throwable.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    buttonField.setEnabled(true);
+                } else {
+                    connectingDialog.dispose();
+                    amestifyWindow.setContentPane(new AmestifyGUI());
+                    amestifyWindow.pack();
+                }
+            });
         });
     }
 

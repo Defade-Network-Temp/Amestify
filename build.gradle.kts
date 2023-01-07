@@ -12,4 +12,5 @@ repositories {
 dependencies {
     implementation("com.formdev:flatlaf:3.0")
     implementation("org.swinglabs:swingx:1.6.1")
+    implementation("org.mongodb:mongo-java-driver:3.12.11")
 }
