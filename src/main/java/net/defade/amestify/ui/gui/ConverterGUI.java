@@ -1,17 +1,27 @@
 package net.defade.amestify.ui.gui;
 
+import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.map.AnvilConverter;
 import org.jdesktop.swingx.prompt.PromptSupport;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 public class ConverterGUI extends JPanel {
     private final JButton anvilFolderPathSelector = new JButton();
@@ -20,7 +30,7 @@ public class ConverterGUI extends JPanel {
     private final JTextField miniGameNameField = new JTextField();
     private final JButton confirmButton = new JButton();
 
-    public ConverterGUI() {
+    public ConverterGUI(MongoConnector mongoConnector) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         Box globalBox = Box.createVerticalBox();
 
@@ -105,7 +115,38 @@ public class ConverterGUI extends JPanel {
             String fileId = fileIdField.getText();
             String miniGameName = miniGameNameField.getText();
 
-            // TODO: Launch converter
+            AnvilConverter anvilConverter = new AnvilConverter(mongoConnector, anvilFolder, fileName, fileId, miniGameName);
+            CompletableFuture<Void> future = anvilConverter.convert();
+
+            // Create the progress dialog
+            JDialog progressDialog = new JDialog((Frame) null, "Converting...");
+            progressDialog.setLayout(new FlowLayout(FlowLayout.CENTER));
+            progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+            progressDialog.setSize(400, 100);
+            progressDialog.setPreferredSize(new Dimension(400, 100));
+            progressDialog.setResizable(false);
+            progressDialog.setVisible(true);
+
+            Box convertingBox = Box.createVerticalBox();
+
+            JLabel convertingLabel = new JLabel("Converting the Anvil world to the Amethyst format...");
+            convertingLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+            convertingBox.add(convertingLabel);
+            convertingLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+            JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL);
+            convertingBox.add(progressBar);
+
+            progressDialog.add(convertingBox);
+            Timer timer = new Timer(100, null);
+            timer.addActionListener(timerEvent -> {
+                if (future.isDone()) {
+                    timer.stop();
+                    progressDialog.dispose();
+                } else {
+                    progressBar.setValue((int) (anvilConverter.getProgress()));
+                }
+            });
         });
     }
 
