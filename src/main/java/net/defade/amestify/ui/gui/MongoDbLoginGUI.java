@@ -146,7 +146,7 @@ public class MongoDbLoginGUI extends JPanel {
                     buttonField.setEnabled(true);
                 } else {
                     connectingDialog.dispose();
-                    amestifyWindow.setContentPane(new ConverterGUI(mongoConnector));
+                    amestifyWindow.setContentPane(new ConverterGUI(amestifyWindow));
                     amestifyWindow.pack();
                 }
             });

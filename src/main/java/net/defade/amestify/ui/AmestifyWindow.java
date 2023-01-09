@@ -23,4 +23,8 @@ public class AmestifyWindow extends JFrame {
 
         Runtime.getRuntime().addShutdownHook(new Thread(mongoConnector::disconnect));
     }
+
+    public MongoConnector getMongoConnector() {
+        return mongoConnector;
+    }
 }
