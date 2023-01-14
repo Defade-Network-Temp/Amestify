@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 group = "net.defade"
@@ -14,8 +15,13 @@ repositories {
 }
 
 dependencies {
+    implementation("com.github.luben:zstd-jni:1.5.2-5")
     implementation("com.formdev:flatlaf:3.0")
     implementation("org.swinglabs:swingx:1.6.1")
     implementation("org.mongodb:mongo-java-driver:3.12.11")
-    implementation("net.defade:Yokura:1.19.2-R1.2-SNAPSHOT")
+    implementation("com.github.Querz:NBT:6.1")
+    implementation("it.unimi.dsi:fastutil:8.5.9")
+    implementation("com.github.Minestom:MinestomDataGenerator:1c1921cd41")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.jetbrains:annotations:23.0.0")
 }

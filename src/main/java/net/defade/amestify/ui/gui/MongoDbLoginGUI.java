@@ -28,11 +28,11 @@ import java.text.NumberFormat;
 import java.util.concurrent.CompletableFuture;
 
 public class MongoDbLoginGUI extends JPanel {
-    private final JTextField hostField = new JTextField();
+    private final JTextField hostField = new JTextField("defade.net");
     private final JFormattedTextField portField = new JFormattedTextField();
-    private final JTextField databaseField = new JTextField();
-    private final JTextField usernameField = new JTextField();
-    private final JPasswordField passwordField = new JPasswordField();
+    private final JTextField databaseField = new JTextField("defade");
+    private final JTextField usernameField = new JTextField("Defade");
+    private final JPasswordField passwordField = new JPasswordField("!2T&jbKu2NKD5xN7");
     private final JButton buttonField = new JButton();
 
     public MongoDbLoginGUI(AmestifyWindow amestifyWindow, MongoConnector mongoConnector) {
@@ -48,6 +48,7 @@ public class MongoDbLoginGUI extends JPanel {
 
         PromptSupport.init("Port", null, null, portField);
         portField.setFormatterFactory(createIntegerFormatter());
+        portField.setValue(27017);
         portField.setPreferredSize(new Dimension(64, 48));
         portField.setMaximumSize(new Dimension(64, 48));
         portField.setAlignmentX(JTextField.CENTER_ALIGNMENT);

@@ -1,8 +1,12 @@
 package net.defade.amestify.ui.gui;
 
-import net.defade.amestify.map.AnvilConverter;
+import net.defade.amestify.loaders.AmethystSaver;
+import net.defade.amestify.loaders.anvil.AnvilMap;
 import net.defade.amestify.ui.AmestifyWindow;
+import net.defade.amestify.utils.MongoFileUploader;
 import net.defade.amestify.utils.ProgressDialog;
+import net.defade.amestify.utils.Utils;
+import net.defade.amestify.world.World;
 import org.jdesktop.swingx.prompt.PromptSupport;
 
 import javax.swing.Box;
@@ -14,19 +18,23 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class ConverterGUI extends JPanel {
+    private final MongoFileUploader mongoFileUploader;
+
     private final JButton anvilFolderPathSelector = new JButton();
     private final JTextField fileNameField = new JTextField();
     private final JTextField fileIdField = new JTextField();
     private final JTextField miniGameNameField = new JTextField();
-    private final JButton confirmButton = new JButton();
 
     private Path anvilPath = null;
 
     public ConverterGUI(AmestifyWindow amestifyWindow) {
+        this.mongoFileUploader = new MongoFileUploader(amestifyWindow.getMongoConnector());
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         Box globalBox = Box.createVerticalBox();
 
@@ -55,6 +63,7 @@ public class ConverterGUI extends JPanel {
         miniGameNameField.setMaximumSize(new Dimension(200, 48));
         miniGameNameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
 
+        JButton confirmButton = new JButton();
         confirmButton.setText("Confirm");
         confirmButton.setPreferredSize(new Dimension(100, 32));
         confirmButton.setMaximumSize(new Dimension(100, 32));
@@ -111,20 +120,46 @@ public class ConverterGUI extends JPanel {
             String fileId = fileIdField.getText();
             String miniGameName = miniGameNameField.getText();
 
-            AnvilConverter anvilConverter = new AnvilConverter(amestifyWindow.getMongoConnector(), anvilPath, fileName, fileId, miniGameName);
-
             ProgressDialog progressDialog = new ProgressDialog(amestifyWindow, 400, 100);
-            CompletableFuture<Void> future = anvilConverter.convert(progressDialog);
+            CompletableFuture<World> worldFuture = new AnvilMap(anvilPath, -64, 320).loadWorld(progressDialog);
 
-            future.whenComplete((unused, throwable) -> {
+            worldFuture.whenComplete((unused, throwable) -> {
                 if (throwable != null) {
                     JOptionPane.showMessageDialog(this, "An error occurred while converting the Anvil file.", "Error", JOptionPane.ERROR_MESSAGE);
                     throwable.printStackTrace();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Successfully converted the Anvil file.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    convertAnvilWorld(worldFuture.join(), fileName, fileId, miniGameName, progressDialog);
                 }
             });
         });
+    }
+
+    private void convertAnvilWorld(World world, String fileName, String fileId, String miniGameName, ProgressDialog progressDialog) {
+        try {
+            Path amethystFile = Utils.createAmethystTempFile(fileName);
+            AmethystSaver amethystSaver = new AmethystSaver(Files.newOutputStream(amethystFile), world);
+
+            amethystSaver.save(progressDialog).whenComplete((unused, throwable) -> {
+                if (throwable != null) {
+                    JOptionPane.showMessageDialog(this, "An error occurred while converting the Amethyst file.", "Error", JOptionPane.ERROR_MESSAGE);
+                    throwable.printStackTrace();
+                } else {
+                    sendAmethystFileToMongoDB(amethystFile, fileName, fileId, miniGameName, progressDialog);
+                }
+            });
+        } catch (IOException exception) {
+            JOptionPane.showMessageDialog(this, "An error occurred while converting the Amethyst file.", "Error", JOptionPane.ERROR_MESSAGE);
+            exception.printStackTrace();
+        }
+    }
+
+    private void sendAmethystFileToMongoDB(Path amethystFile, String fileName, String fileId, String miniGameName, ProgressDialog progressDialog) {
+        try {
+            mongoFileUploader.sendFile(amethystFile, fileName, fileId, miniGameName, progressDialog);
+        } catch (IOException exception) {
+            JOptionPane.showMessageDialog(this, "An error occurred while sending the Amethyst file.", "Error", JOptionPane.ERROR_MESSAGE);
+            exception.printStackTrace();
+        }
     }
 
     private static Component createRigidArea(int width, int height) {

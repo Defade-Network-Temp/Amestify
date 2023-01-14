@@ -40,9 +40,8 @@ public class ProgressDialog {
         dialog.setTitle(title);
     }
 
-    public String setMessage(String message) {
+    public void setMessage(String message) {
         messageLabel.setText(message);
-        return message;
     }
 
     public void setIndeterminateProgress(boolean indeterminate) {
@@ -51,6 +50,10 @@ public class ProgressDialog {
 
     public void setValue(int value) {
         progressBar.setValue(value);
+    }
+
+    public int getValue() {
+        return progressBar.getValue();
     }
 
     public void setMaximumValue(int maximumValue) {
