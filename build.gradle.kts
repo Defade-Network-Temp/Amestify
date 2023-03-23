@@ -16,8 +16,6 @@ repositories {
 
 dependencies {
     implementation("com.github.luben:zstd-jni:1.5.2-5")
-    implementation("com.formdev:flatlaf:3.0")
-    implementation("org.swinglabs:swingx:1.6.1")
     implementation("org.mongodb:mongo-java-driver:3.12.11")
     implementation("com.github.Querz:NBT:6.1")
     implementation("it.unimi.dsi:fastutil:8.5.9")
