@@ -67,6 +67,10 @@ public class Block {
         throw new RuntimeException(namespace + " " + "No state id found for properties " + Arrays.toString(properties));
     }
 
+    public Map<String[], Integer> getStatesId() {
+        return statesId;
+    }
+
     public static void init() throws IOException {
         InputStream blocksJsonInputStream = Main.class.getClassLoader().getResourceAsStream("blocks.json");
         if(blocksJsonInputStream == null) {
@@ -116,6 +120,10 @@ public class Block {
 
     public static Block fromNamespaceId(NamespaceID namespace) {
         return fromNamespaceId(namespace.path());
+    }
+
+    public static int getStatesIdAmount() {
+        return BLOCKS_BY_STATE_ID.length;
     }
 
     private static String cleanProperties(String properties) {

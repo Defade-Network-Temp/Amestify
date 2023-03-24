@@ -1,21 +1,18 @@
 package net.defade.amestify;
 
+import net.defade.amestify.graphics.Assets;
 import net.defade.amestify.graphics.Window;
-import net.defade.amestify.world.Block;
-import net.defade.amestify.world.biome.Biome;
+import net.defade.amestify.graphics.gui.GUI;
+
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 public class Main {
-    public static void main(String[] args) {
-        try {
-            Block.init();
-            Biome.init();
-        } catch (IOException exception) {
-            exception.printStackTrace();
-            System.err.println("Couldn't load block or biome data.");
-        }
-
+    public static void main(String[] args) throws IOException, URISyntaxException {
         Window.init(1920, 1080, "Amestify");
-        Window.loop(null); // TODO change it
+        Assets.init();
+
+        Window.loop(new GUI() {
+        }); // TODO change it
     }
 }

@@ -31,6 +31,7 @@ dependencies {
     implementation("org.lwjgl", "lwjgl")
     implementation("org.lwjgl", "lwjgl-glfw")
     implementation("org.lwjgl", "lwjgl-nfd")
+    implementation("org.lwjgl", "lwjgl-stb")
     implementation("org.lwjgl", "lwjgl-opengl")
     implementation("org.joml", "joml", jomlVersion)
     implementation("io.github.spair", "imgui-java-app", "1.86.10")
@@ -38,10 +39,12 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl", classifier = "natives-windows")
     runtimeOnly("org.lwjgl", "lwjgl-glfw", classifier = "natives-windows")
     runtimeOnly("org.lwjgl", "lwjgl-nfd", classifier = "natives-windows")
+    runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = "natives-windows")
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = "natives-windows")
     // Linux
     runtimeOnly("org.lwjgl", "lwjgl", classifier = "natives-linux")
     runtimeOnly("org.lwjgl", "lwjgl-glfw", classifier = "natives-linux")
     runtimeOnly("org.lwjgl", "lwjgl-nfd", classifier = "natives-linux")
+    runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = "natives-linux")
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = "natives-linux")
 }
