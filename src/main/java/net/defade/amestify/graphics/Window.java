@@ -1,10 +1,10 @@
 package net.defade.amestify.graphics;
 
+import net.defade.amestify.graphics.gui.GUI;
+import net.defade.amestify.graphics.gui.ImGUILayer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
-
-import java.util.concurrent.ThreadLocalRandom;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -17,6 +17,10 @@ public class Window {
     private static int width, height;
     private static String title;
     private static long windowPointer;
+
+    private static final ImGUILayer imGUILayer = new ImGUILayer();
+
+    private static GUI gui;
 
     public static void init(int width, int height, String title) {
         Thread.currentThread().setName("Render Thread");
@@ -43,7 +47,7 @@ public class Window {
 
         glfwSetWindowSizeCallback(windowPointer, (window, widthCallback, heightCallback) -> {
             Window.width = widthCallback;
-            Window.height = height;
+            Window.height = heightCallback;
             glfwSetWindowSize(window, width, height);
         });
 
@@ -53,12 +57,14 @@ public class Window {
         GL.createCapabilities();
 
         glViewport(0, 0, width, height);
+        imGUILayer.initImGui();
 
         glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_OTHER, GL_DONT_CARE, 0x20071, false);
         GLUtil.setupDebugMessageCallback(System.err);
     }
 
-    public static void loop() {
+    public static void loop(GUI startGUI) {
+        gui = startGUI;
         TIME_STARTED = System.nanoTime();
         long beginTime = 0;
         long endTime;
@@ -68,9 +74,10 @@ public class Window {
             glfwPollEvents();
 
             if (deltaTime >= 0) {
-                glClearColor(0.4f, 0.4f, 0.7f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
+                gui.render(deltaTime);
             }
+
+            imGUILayer.update(deltaTime / 1e9f); // ImGUI expects a delta time in seconds
 
             glfwSwapBuffers(windowPointer);
 
@@ -84,6 +91,22 @@ public class Window {
 
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+    }
+
+    public static int getWidth() {
+        return width;
+    }
+
+    public static int getHeight() {
+        return height;
+    }
+
+    public static long getWindowPointer() {
+        return windowPointer;
+    }
+
+    public static GUI getGUI() {
+        return gui;
     }
 
     private static long getTime() {

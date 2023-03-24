@@ -16,6 +16,6 @@ public class Main {
         }
 
         Window.init(1920, 1080, "Amestify");
-        Window.loop();
+        Window.loop(null); // TODO change it
     }
 }

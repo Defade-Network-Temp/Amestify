@@ -33,6 +33,7 @@ dependencies {
     implementation("org.lwjgl", "lwjgl-nfd")
     implementation("org.lwjgl", "lwjgl-opengl")
     implementation("org.joml", "joml", jomlVersion)
+    implementation("io.github.spair", "imgui-java-app", "1.86.10")
     // Windows
     runtimeOnly("org.lwjgl", "lwjgl", classifier = "natives-windows")
     runtimeOnly("org.lwjgl", "lwjgl-glfw", classifier = "natives-windows")
