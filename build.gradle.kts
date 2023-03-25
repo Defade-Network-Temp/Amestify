@@ -21,7 +21,7 @@ dependencies {
     implementation("com.github.luben:zstd-jni:1.5.2-5")
     implementation("org.mongodb:mongo-java-driver:3.12.11")
     implementation("com.github.Querz:NBT:6.1")
-    implementation("it.unimi.dsi:fastutil:8.5.9")
+    implementation("it.unimi.dsi:fastutil-core:8.5.9")
     implementation("com.github.Minestom:MinestomDataGenerator:1c1921cd41")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("org.jetbrains:annotations:23.0.0")
@@ -47,4 +47,11 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-nfd", classifier = "natives-linux")
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = "natives-linux")
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = "natives-linux")
+}
+
+tasks.withType(Jar::class) {
+    manifest {
+        attributes["Manifest-Version"] = "1.0"
+        attributes["Main-Class"] = "net.defade.amestify.Main"
+    }
 }
