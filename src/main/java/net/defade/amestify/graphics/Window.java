@@ -56,6 +56,9 @@ public class Window {
 
         GL.createCapabilities();
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
         glViewport(0, 0, width, height);
         imGUILayer.initImGui();
 
@@ -111,5 +114,9 @@ public class Window {
 
     private static long getTime() {
         return System.nanoTime() - TIME_STARTED;
+    }
+
+    public static float getTargetAspectRatio() {
+        return 16f / 9f;
     }
 }

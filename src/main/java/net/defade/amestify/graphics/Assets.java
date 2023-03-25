@@ -1,5 +1,6 @@
 package net.defade.amestify.graphics;
 
+import net.defade.amestify.graphics.texture.BiomeTexture;
 import net.defade.amestify.graphics.texture.block.BlockSheet;
 import net.defade.amestify.graphics.texture.block.generator.BlockTextureData;
 import net.defade.amestify.graphics.texture.block.generator.BlockTextureMap;
@@ -18,6 +19,8 @@ import java.util.zip.ZipInputStream;
 public class Assets {
     public static BlockSheet BLOCK_SHEET;
 
+    public static Shader CHUNK_SHADER;
+
     public static void init() throws IOException {
         Block.init();
         BiomeTexture.init();
@@ -25,6 +28,9 @@ public class Assets {
 
         BlockTextureData[] blockTextureData = new BlockTextureMap().init();
         BLOCK_SHEET = new BlockSheet(blockTextureData, moveTexturesToTemp());
+
+        CHUNK_SHADER = new Shader("map-shader.glsl");
+        CHUNK_SHADER.init();
     }
 
     // Java can't list files inside the JAR, so we copy them to a temp folder.
@@ -42,7 +48,7 @@ public class Assets {
 
         unzip(blocksZipPath, tempPath.resolve("blocks"));
 
-        return tempPath;
+        return tempPath.resolve("blocks");
     }
 
     private static void unzip(Path zipFilePath, Path destinationDirectory) throws IOException {

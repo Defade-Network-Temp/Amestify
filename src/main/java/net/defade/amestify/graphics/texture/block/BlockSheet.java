@@ -105,8 +105,12 @@ public class BlockSheet {
         glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
     }
 
-    public int getTextureId() {
-        return textureId;
+    public void bind() {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, textureId);
+    }
+
+    public void unbind() {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     }
 
     public BlockTexture getBlockTexture(int stateId) {

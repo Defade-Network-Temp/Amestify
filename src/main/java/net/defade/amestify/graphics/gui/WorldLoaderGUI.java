@@ -201,7 +201,7 @@ public class WorldLoaderGUI {
                     throwable.printStackTrace();
                 }
                 progressTracker.increment();
-                regionFuture.completeExceptionally(null);
+                regionFuture.complete(null);
             });
         }
 
@@ -210,5 +210,13 @@ public class WorldLoaderGUI {
         });
 
         return completableFuture;
+    }
+
+    public boolean isDone() {
+        return worldFuture != null && worldFuture.isDone() && !worldFuture.isCompletedExceptionally() && calculatingTexturesFuture != null && calculatingTexturesFuture.isDone();
+    }
+
+    public World getWorld() {
+        return worldFuture.join();
     }
 }
