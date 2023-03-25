@@ -2,7 +2,7 @@ package net.defade.amestify;
 
 import net.defade.amestify.graphics.Assets;
 import net.defade.amestify.graphics.Window;
-import net.defade.amestify.graphics.gui.GUI;
+import net.defade.amestify.graphics.gui.ViewerGUI;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -12,7 +12,6 @@ public class Main {
         Window.init(1920, 1080, "Amestify");
         Assets.init();
 
-        Window.loop(new GUI() {
-        }); // TODO change it
+        Window.loop(new ViewerGUI());
     }
 }

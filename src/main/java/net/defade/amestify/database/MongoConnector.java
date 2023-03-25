@@ -13,8 +13,11 @@ import java.util.concurrent.CompletableFuture;
 public class MongoConnector {
     private MongoClient mongoClient;
     private MongoDatabase mongoDatabase;
+    private boolean isConnected = false;
 
     public CompletableFuture<Void> connect(String host, int port, String username, char[] password, String authDatabase) {
+        if(isConnected) return CompletableFuture.completedFuture(null);
+
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         CompletableFuture.runAsync(() -> {
             MongoCredential mongoCredential = MongoCredential.createCredential(username, authDatabase, password);
@@ -33,6 +36,7 @@ public class MongoConnector {
             }
 
             mongoDatabase = mongoClient.getDatabase(authDatabase);
+            isConnected = true;
             completableFuture.complete(null);
         });
 
@@ -44,8 +48,13 @@ public class MongoConnector {
     }
 
     public void disconnect() {
+        isConnected = false;
         if (mongoClient != null) {
             mongoClient.close();
         }
+    }
+
+    public boolean isConnected() {
+        return isConnected;
     }
 }
