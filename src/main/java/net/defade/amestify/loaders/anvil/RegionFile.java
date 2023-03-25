@@ -1,5 +1,6 @@
 package net.defade.amestify.loaders.anvil;
 
+import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.pos.ChunkPos;
 import net.defade.amestify.world.chunk.pos.RegionPos;
@@ -15,7 +16,7 @@ import java.util.List;
 public class RegionFile {
     private final Chunk[] chunks = new Chunk[1024];
 
-    public RegionFile(Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
+    public RegionFile(ProgressTracker progressTracker, Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
         RandomAccessFile regionFile = new RandomAccessFile(regionFilePath.toFile(), "r");
 
         for (int i = 0; i < 1024; i++) {
@@ -26,6 +27,7 @@ public class RegionFile {
             offset |= regionFile.read() & 0xFF;
 
             if (regionFile.readByte() == 0) {
+                if(progressTracker != null) progressTracker.increment();
                 continue;
             }
 
@@ -40,6 +42,7 @@ public class RegionFile {
                     minY, maxY, // TODO minY and maxY
                     compressionType, chunkInputStream
             );
+            if(progressTracker != null) progressTracker.increment();
             if(chunk.isEmpty()) {
                 continue;
             }

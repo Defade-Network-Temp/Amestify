@@ -1,6 +1,6 @@
 package net.defade.amestify.loaders.anvil;
 
-import net.defade.amestify.utils.ProgressDialog;
+import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.World;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.pos.RegionPos;
@@ -32,14 +32,20 @@ public class AnvilMap {
     }
 
     public CompletableFuture<RegionFile> loadRegion(RegionPos regionPos) {
+        return loadRegion(regionPos, null);
+    }
+
+    private CompletableFuture<RegionFile> loadRegion(RegionPos regionPos, ProgressTracker progressTracker) {
         CompletableFuture<RegionFile> completableFuture = new CompletableFuture<>();
             executor.submit(() -> {
                 try {
                     RegionFile regionFile = regionFileCache.get(regionPos);
 
                     if (regionFile == null) {
-                        regionFile = new RegionFile(regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY);
+                        regionFile = new RegionFile(progressTracker, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY);
                         regionFileCache.put(regionPos, regionFile);
+                    } else if(progressTracker != null) {
+                        progressTracker.increment(1024);
                     }
 
                     completableFuture.complete(regionFile);
@@ -52,7 +58,7 @@ public class AnvilMap {
         return completableFuture;
     }
 
-    public CompletableFuture<World> loadWorld(ProgressDialog progressDialog) {
+    public CompletableFuture<World> loadWorld(ProgressTracker progressTracker) {
         CompletableFuture<World> completableFuture = new CompletableFuture<>();
 
         CompletableFuture.runAsync(() -> {
@@ -60,6 +66,7 @@ public class AnvilMap {
                 World world = new World();
                 List<Path> regionFiles = getRegionFiles();
                 final int chunksToLoad = regionFiles.size() * 1024;
+                progressTracker.reset(chunksToLoad);
 
                 List<CompletableFuture<RegionFile>> loadingFutures = new ArrayList<>();
 
@@ -73,32 +80,21 @@ public class AnvilMap {
                     int regionX = Integer.parseInt(split[1]);
                     int regionZ = Integer.parseInt(split[2]);
 
-                    loadingFutures.add(loadRegion(new RegionPos(regionX, regionZ)).whenComplete((regionFile, throwable) -> {
+                    loadingFutures.add(loadRegion(new RegionPos(regionX, regionZ), progressTracker).whenComplete((regionFile, throwable) -> {
                         if(throwable != null) {
                             completableFuture.completeExceptionally(throwable);
+                            executor.shutdownNow();
                             return;
                         }
 
                         for (Chunk chunk : regionFile.getChunks()) {
-                            progressDialog.setValue(progressDialog.getValue() + 1);
-                            progressDialog.setBarText(progressDialog.getValue() + "/" + chunksToLoad + " chunks loaded.");
-
                             if(chunk == null) continue;
-                            progressDialog.setMessage("Loading chunk [x=" + chunk.getChunkPos().x() + ", z=" + chunk.getChunkPos().z() + "]");
                             world.addChunk(chunk);
                         }
                     }));
                 }
 
-                progressDialog.setIndeterminateProgress(false);
-                progressDialog.setTitle("Loading...");
-                progressDialog.setMaximumValue(chunksToLoad);
-
                 CompletableFuture.allOf(loadingFutures.toArray(new CompletableFuture[0])).whenComplete((unused, throwable) -> {
-                    if(throwable != null) {
-                        completableFuture.completeExceptionally(throwable);
-                        return;
-                    }
                     completableFuture.complete(world);
                 });
 

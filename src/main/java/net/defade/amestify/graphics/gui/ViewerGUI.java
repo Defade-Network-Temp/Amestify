@@ -21,6 +21,7 @@ public class ViewerGUI extends GUI {
             disableView();
         } else {
             worldLoaderGUI.renderImGui();
+            disableView();
         }
 
         enableView();

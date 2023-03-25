@@ -5,6 +5,8 @@ import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
 import net.defade.amestify.loaders.anvil.AnvilMap;
+import net.defade.amestify.utils.ProgressTracker;
+import net.defade.amestify.world.World;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -13,13 +15,25 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 public class WorldLoaderGUI {
     private Path worldPath = null;
-    private AnvilMap anvilMap = null;
+    private final ProgressTracker progressTracker = new ProgressTracker();
+
+    private CompletableFuture<World> worldFuture = null;
+    private Throwable worldFutureException = null;
 
     public void renderImGui() {
+        if(worldFuture == null) {
+            renderSelectWorldDialog();
+        } else {
+            renderWorldLoadingDialog();
+        }
+    }
+
+    private void renderSelectWorldDialog() {
         ImGui.setNextWindowSize(200, 100);
         ImGui.begin("Select world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
@@ -46,8 +60,20 @@ public class WorldLoaderGUI {
         if(isPathValid()) {
             centerNextItem("Load");
             if(ImGui.button("Load")) {
-                System.out.println("load");
+                worldFuture = new AnvilMap(worldPath, -64, 320).loadWorld(progressTracker);
+                worldFuture.whenComplete((world, throwable) -> {
+                    if(throwable != null) {
+                        worldFutureException = throwable;
+                        worldFuture = null;
+                    }
+                });
             }
+        }
+
+        if(worldFutureException != null) {
+            ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
+            ImGui.textWrapped(worldFutureException.getMessage());
+            ImGui.popStyleColor();
         }
 
         ImGui.end();
@@ -81,6 +107,31 @@ public class WorldLoaderGUI {
         }
 
         return true;
+    }
+
+    private void renderWorldLoadingDialog() {
+        ImGui.setNextWindowSize(600, 100);
+        ImGui.begin("Loading world...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
+
+        String text = "Loaded " + progressTracker.getCurrent() + " out of " +
+                progressTracker.getTotal() + " chunks (" +
+                (int) (progressTracker.getProgress() * 100) + "%)";
+        float windowWidth = ImGui.getWindowSizeX();
+        float windowHeight = ImGui.getWindowSizeY();
+        float width = 600;
+        float height = 30;
+        ImGui.setCursorPosX((windowWidth - width) / 2);
+        ImGui.setCursorPosY((windowHeight - height) / 2);
+
+        ImGui.progressBar(progressTracker.getProgress(), width, height, "");
+        ImGui.sameLine(
+                (windowWidth - width) / 2 // Set text start at the start of the progress bar
+                        + (width / 2)  // Set text start at the middle of the progress bar
+                        - (ImGui.calcTextSize(text).x / 2) // Set text at the middle of the text
+        );
+        ImGui.text(text);
+
+        ImGui.end();
     }
 
     private void centerNextItem(String label) {
