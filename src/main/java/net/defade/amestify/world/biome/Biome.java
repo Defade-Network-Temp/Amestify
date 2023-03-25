@@ -3,20 +3,20 @@ package net.defade.amestify.world.biome;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.defade.amestify.Main;
+import net.defade.amestify.graphics.texture.BiomeTexture;
 import net.defade.amestify.utils.NamespaceID;
-
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Biome {
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(0);
-    private static final Map<Integer, Biome> BIOMES = new HashMap<>();
+    private static final List<Biome> BIOMES = new ArrayList<>();
 
     private static final BiomeEffects DEFAULT_EFFECTS = BiomeEffects.builder()
             .fogColor(0xC0D8FF)
@@ -91,6 +91,19 @@ public final class Biome {
 
     public TemperatureModifier temperatureModifier() {
         return this.temperatureModifier;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Biome biome = (Biome) o;
+        return id == biome.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 
     public enum Precipitation {
@@ -168,7 +181,30 @@ public final class Biome {
         }
 
         public Biome build() {
-            return new Biome(name, depth, temperature, scale, downfall, category, effects, precipitation, temperatureModifier);
+            return new Biome(
+                    name,
+                    depth,
+                    temperature,
+                    scale,
+                    downfall,
+                    category,
+                    BiomeEffects.builder()
+                            .fogColor(effects.fogColor())
+                            .skyColor(effects.skyColor())
+                            .waterColor(BiomeTexture.getWaterColor(effects.waterColor()))
+                            .waterFogColor(effects.waterFogColor())
+                            .foliageColor(BiomeTexture.getFoliageColor(effects.foliageColor(), temperature, depth))
+                            .grassColor(BiomeTexture.getGrassColor(effects.grassColor(), temperature, downfall))
+                            .grassColorModifier(effects.grassColorModifier())
+                            .biomeParticle(effects.biomeParticle())
+                            .ambientSound(effects.ambientSound())
+                            .moodSound(effects.moodSound())
+                            .additionsSound(effects.additionsSound())
+                            .music(effects.music())
+                            .build(),
+                    precipitation,
+                    temperatureModifier
+            );
         }
     }
 
@@ -217,12 +253,12 @@ public final class Biome {
                             .build())
                     .build();
 
-            BIOMES.put(biome.id, biome);
+            BIOMES.add(biome);
         }
     }
 
     public static Biome getByName(NamespaceID from) {
-        for (Biome biome : BIOMES.values()) {
+        for (Biome biome : BIOMES) {
             if(biome.name.path().equals(from.path())) {
                 return biome;
             }
@@ -232,7 +268,7 @@ public final class Biome {
     }
 
     public static Biome getMinecraftBiomeByName(String name) {
-        for (Biome biome : BIOMES.values()) {
+        for (Biome biome : BIOMES) {
             if(biome.name.asString().equals(name)) {
                 return biome;
             }
@@ -246,6 +282,6 @@ public final class Biome {
     }
 
     public static Collection<Biome> unmodifiableCollection() {
-        return Collections.unmodifiableCollection(BIOMES.values());
+        return Collections.unmodifiableCollection(BIOMES);
     }
 }
