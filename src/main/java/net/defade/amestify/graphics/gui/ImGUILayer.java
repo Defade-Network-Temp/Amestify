@@ -120,9 +120,7 @@ public class ImGUILayer {
                 ImGui.setWindowFocus(null);
             }
 
-            if(!io.getWantCaptureMouse()) {
-                MouseListener.mouseButtonCallback(button, action);
-            }
+            MouseListener.mouseButtonCallback(button, action);
         });
 
         glfwSetCursorPosCallback(Window.getWindowPointer(), (w, x, y) -> {
