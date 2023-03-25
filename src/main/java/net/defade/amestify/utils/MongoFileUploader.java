@@ -20,7 +20,7 @@ public class MongoFileUploader {
         this.mongoConnector = mongoConnector;
     }
 
-    public void sendFile(Path amethystFilePath, String fileName, String fileId, String miniGameName, ProgressDialog progressDialog) throws IOException {
+    public void sendFile(Path amethystFilePath, String fileName, String fileId, String miniGameName) throws IOException {
         GridFSBucket gridFSBucket = GridFSBuckets.create(mongoConnector.getMongoDatabase(), "maps");
 
         GridFSUploadOptions options = new GridFSUploadOptions()
@@ -34,21 +34,13 @@ public class MongoFileUploader {
         int length;
         long fileLength = Files.size(amethystFilePath);
 
-        progressDialog.setTitle("Sending...");
-        progressDialog.setMessage("Sending the amethyst world to the database...");
-        progressDialog.setMaximumValue((int) fileLength);
-        progressDialog.setIndeterminateProgress(false);
-
         long sentBytes = 0;
 
         while ((length = fileInputStream.read(buffer)) != -1) {
             sentBytes += length;
             gridFSUploadStream.write(buffer, 0, length);
-            progressDialog.setValue((int) sentBytes);
-            progressDialog.setBarText(convertUnit(sentBytes) + " / " + convertUnit(fileLength) + " transferred");
         }
 
-        progressDialog.close();
         JOptionPane.showMessageDialog(null, "Successfully converted the anvil world!", "Finished", JOptionPane.INFORMATION_MESSAGE);
 
         gridFSUploadStream.flush();

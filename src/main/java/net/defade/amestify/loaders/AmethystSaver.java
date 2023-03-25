@@ -2,7 +2,6 @@ package net.defade.amestify.loaders;
 
 import com.github.luben.zstd.ZstdOutputStream;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.defade.amestify.utils.ProgressDialog;
 import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeParser;
@@ -27,16 +26,12 @@ public class AmethystSaver {
         this.world = world;
     }
 
-    public CompletableFuture<Void> save(ProgressDialog progressDialog) {
+    public CompletableFuture<Void> save() {
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
         CompletableFuture.runAsync(() -> {
             final Collection<Biome> biomes = Biome.unmodifiableCollection();
             final Collection<Chunk> chunks = world.getChunks();
-
-            progressDialog.setIndeterminateProgress(false);
-            progressDialog.setTitle("Converting...");
-            progressDialog.setMaximumValue(chunks.size());
 
             try {
                 dataOutputStream.writeUTF(config);
@@ -54,9 +49,6 @@ public class AmethystSaver {
                 int totalConvertedChunks = 0;
 
                 for (Chunk chunk : chunks) {
-                    progressDialog.setMessage("Converting chunk [x=" + chunk.getChunkPos().x() + ", z=" + chunk.getChunkPos().z() + "]");
-                    progressDialog.setBarText(totalConvertedChunks + "/" + chunks.size() + " chunks converted");
-                    progressDialog.setValue(totalConvertedChunks++);
                     byte[] serializedChunk = encodeChunk(chunk);
 
                     dataOutputStream.writeLong(chunk.getChunkPos().getChunkIndex());
