@@ -20,6 +20,7 @@ public class Assets {
 
     public static void init() throws IOException {
         Block.init();
+        BiomeTexture.init();
         Biome.init();
 
         BlockTextureData[] blockTextureData = new BlockTextureMap().init();
