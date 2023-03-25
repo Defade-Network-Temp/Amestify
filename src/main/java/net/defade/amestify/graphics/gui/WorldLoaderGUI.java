@@ -5,6 +5,7 @@ import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
 import net.defade.amestify.loaders.anvil.AnvilMap;
+import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.World;
 import org.lwjgl.PointerBuffer;
@@ -15,7 +16,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 public class WorldLoaderGUI {
@@ -25,11 +30,17 @@ public class WorldLoaderGUI {
     private CompletableFuture<World> worldFuture = null;
     private Throwable worldFutureException = null;
 
+    private CompletableFuture<Void> calculatingTexturesFuture = null;
+
     public void renderImGui() {
         if(worldFuture == null) {
             renderSelectWorldDialog();
         } else {
-            renderWorldLoadingDialog();
+            if(!worldFuture.isDone()) {
+                renderWorldLoadingDialog();
+            } else if(calculatingTexturesFuture != null && !calculatingTexturesFuture.isDone()) {
+                renderCalculatingTexturesDialog();
+            }
         }
     }
 
@@ -65,6 +76,8 @@ public class WorldLoaderGUI {
                     if(throwable != null) {
                         worldFutureException = throwable;
                         worldFuture = null;
+                    } else {
+                        calculatingTexturesFuture = calculateMapViewerTextures();
                     }
                 });
             }
@@ -134,6 +147,31 @@ public class WorldLoaderGUI {
         ImGui.end();
     }
 
+    private void renderCalculatingTexturesDialog() {
+        ImGui.setNextWindowSize(600, 100);
+        ImGui.begin("Calculating region textures...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
+
+        String text = "Calculated " + progressTracker.getCurrent() + " out of " +
+                progressTracker.getTotal() + " region textures (" +
+                (int) (progressTracker.getProgress() * 100) + "%)";
+        float windowWidth = ImGui.getWindowSizeX();
+        float windowHeight = ImGui.getWindowSizeY();
+        float width = 600;
+        float height = 30;
+        ImGui.setCursorPosX((windowWidth - width) / 2);
+        ImGui.setCursorPosY((windowHeight - height) / 2);
+
+        ImGui.progressBar(progressTracker.getProgress(), width, height, "");
+        ImGui.sameLine(
+                (windowWidth - width) / 2 // Set text start at the start of the progress bar
+                        + (width / 2)  // Set text start at the middle of the progress bar
+                        - (ImGui.calcTextSize(text).x / 2) // Set text at the middle of the text
+        );
+        ImGui.text(text);
+
+        ImGui.end();
+    }
+
     private void centerNextItem(String label) {
         ImGuiStyle style = ImGui.getStyle();
 
@@ -142,5 +180,35 @@ public class WorldLoaderGUI {
 
         float off = (avail - size) * 0.5f;
         if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
+    }
+
+    private CompletableFuture<Void> calculateMapViewerTextures() {
+        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+        World world = worldFuture.join();
+        progressTracker.reset(world.getRegions().size());
+
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (RegionFile region : worldFuture.join().getRegions()) {
+            CompletableFuture<Void> regionFuture = new CompletableFuture<>();
+            futures.add(regionFuture);
+
+            executorService.submit(() -> {
+                try {
+                    region.calculateTextures();
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+                progressTracker.increment();
+                regionFuture.completeExceptionally(null);
+            });
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).whenComplete((unused, throwable) -> {
+            completableFuture.complete(null);
+        });
+
+        return completableFuture;
     }
 }

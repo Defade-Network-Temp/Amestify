@@ -87,10 +87,7 @@ public class AnvilMap {
                             return;
                         }
 
-                        for (Chunk chunk : regionFile.getChunks()) {
-                            if(chunk == null) continue;
-                            world.addChunk(chunk);
-                        }
+                        world.addRegion(regionFile);
                     }));
                 }
 

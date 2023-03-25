@@ -29,6 +29,7 @@ public class Chunk {
     private final int maxY;
 
     private final List<Section> sections = new ArrayList<>();
+    private int[] heightMap = new int[256];
 
     public Chunk(ChunkPos chunkPos, int minY, int maxY, CompressionType compressionType, InputStream inputStream) throws IOException {
         this.chunkPos = chunkPos;
@@ -46,6 +47,7 @@ public class Chunk {
         CompoundTag nbt = (CompoundTag) nbtDeserializer.fromStream(compressionType.decompress(inputStream)).getTag();
 
         readSections(nbt.getListTag("sections"));
+        readHeightmap(nbt);
     }
 
     public ChunkPos getChunkPos() {
@@ -71,6 +73,23 @@ public class Chunk {
 
         return true;
     }
+
+    public int getBlockState(int x, int y, int z) {
+        return getSection(y >> 4).getBlockPalette().get(x & 0xF, y & 0xF, z & 0xF);
+    }
+
+    public Biome getBiome(int x, int y, int z) {
+        return Biome.getById(getSection(y >> 4).getBiomePalette().get((x & 0xF) / 4, (y & 0xF) / 4, (z & 0xF) / 4));
+    }
+
+    public int getHighestBlockAt(int x, int z) {
+        return heightMap[(x & 0xF) + ((z & 0xF) << 4)] + minY -1;
+    }
+
+    public void clearHeightMap() {
+        heightMap = null;
+    }
+
     private void readSections(ListTag<?> sectionsNBT) {
         if(sectionsNBT == null) {
             return;
@@ -105,6 +124,24 @@ public class Chunk {
             if(skyLight != null && skyLight.length > 0) {
                 section.setSkyLight(skyLight);
             }
+        }
+    }
+
+    private void readHeightmap(CompoundTag chunkNBT) {
+        if(chunkNBT.getCompoundTag("Heightmaps") == null) return;
+        long[] packedHeightmap = chunkNBT.getCompoundTag("Heightmaps").getLongArray("WORLD_SURFACE");
+        if(packedHeightmap.length == 0) {
+            return;
+        }
+        int intPerLong = 7; // Math.floor(64.0 / 9)
+
+        long mask = 511L; //(1 << 9) -1L
+        for (int i = 0; i < heightMap.length; i++) {
+            int longIndex = i / intPerLong;
+            int subIndex = i % intPerLong;
+            int value = (int) ((packedHeightmap[longIndex] >> (subIndex * 9)) & mask);
+
+            heightMap[i] = value;
         }
     }
 
