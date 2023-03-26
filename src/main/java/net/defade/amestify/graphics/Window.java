@@ -48,7 +48,6 @@ public class Window {
         glfwSetWindowSizeCallback(windowPointer, (window, widthCallback, heightCallback) -> {
             Window.width = widthCallback;
             Window.height = heightCallback;
-            glfwSetWindowSize(window, width, height);
         });
 
         glfwMakeContextCurrent(windowPointer);
