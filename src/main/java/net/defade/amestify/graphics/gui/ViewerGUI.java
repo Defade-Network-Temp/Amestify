@@ -120,6 +120,9 @@ public class ViewerGUI extends GUI {
 
         Assets.BLOCK_SHEET.unbind();
         Assets.CHUNK_SHADER.detach();
+
+        renderGrid();
+
         framebuffer.unbind();
 
         ImGui.begin("Map", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
@@ -213,6 +216,37 @@ public class ViewerGUI extends GUI {
     private boolean isMouseInViewport() {
         return MouseListener.getX() >= viewportPos.x && MouseListener.getX() <= viewportPos.x + viewportSize.x &&
                 MouseListener.getY() >= viewportPos.y && MouseListener.getY() <= viewportPos.y + viewportSize.y;
+    }
+
+    private void renderGrid() {
+        Vector2f projectionSize = new Vector2f(camera.getZoom()).mul(camera.getProjectionSize());
+
+        int areaSeen = (int) ((projectionSize.x / 16) * (projectionSize.y / 16));
+        int gridSize = 16; // Block grid
+        if(areaSeen >= 9000 && areaSeen < 660000) {
+            gridSize = 16 * 16; // Chunk grid
+        } else if(areaSeen >= 660000) {
+            gridSize = 32 * 16 * 16; // Region grid
+        }
+
+        int firstX = (int) Math.floor(camera.getPosition().x / gridSize) * gridSize;
+        int firstY = (int) Math.floor(camera.getPosition().y / gridSize) * gridSize;
+
+        int endX = firstX + (int) Math.ceil((projectionSize.x / gridSize) + 1) * gridSize;
+        int endY = firstY + (int) Math.ceil((projectionSize.y / gridSize) + 1) * gridSize;
+        int xLines = (int) projectionSize.x / gridSize + 2;
+        int yLines = (int) projectionSize.y / gridSize + 2;
+
+        Assets.GRID_SHADER.attach();
+        Assets.GRID_SHADER.uploadMat4f("projection", camera.getProjectionMatrix());
+        Assets.GRID_SHADER.uploadMat4f("view", camera.getViewMatrix());
+        Assets.GRID_SHADER.uploadVec4i("coords", firstX, firstY, endX, endY);
+        Assets.GRID_SHADER.uploadInt("xLines", xLines);
+        Assets.GRID_SHADER.uploadInt("gridSize", gridSize);
+
+
+        glDrawArraysInstanced(GL_LINES, 0, 2, xLines + yLines);
+        Assets.GRID_SHADER.detach();
     }
 
     private static ImVec2 getLargestSizeForViewport() {
