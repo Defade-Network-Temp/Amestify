@@ -3,7 +3,6 @@ package net.defade.amestify.graphics.gui.map;
 import net.defade.amestify.graphics.texture.block.BlockTexture;
 import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.world.biome.Biome;
-import org.lwjgl.opengl.GL46;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -46,57 +45,45 @@ public class RegionRenderer {
     }
 
     public void init() {
-        vaoID = glGenVertexArrays();
-        glBindVertexArray(vaoID);
+        vboID = glCreateBuffers();
+        glNamedBufferData(vboID, vertices, GL_STATIC_DRAW);
 
-        vboID = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
-        glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+        eboID = glCreateBuffers();
+        glNamedBufferData(eboID, generateIndices(), GL_STATIC_DRAW);
 
-        eboID = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, generateIndices(), GL_STATIC_DRAW);
+        vaoID = glCreateVertexArrays();
 
-        GL46.glVertexAttribPointer(0, POS_SIZE, GL46.GL_FLOAT, false, VERTEX_SIZE_BYTES, POS_OFFSET);
-        GL46.glEnableVertexAttribArray(0);
+        glVertexArrayVertexBuffer(vaoID, 0, vboID, 0, VERTEX_SIZE_BYTES);
+        glVertexArrayElementBuffer(vaoID, eboID);
 
-        GL46.glVertexAttribPointer(1, COLOR_SIZE, GL46.GL_FLOAT, false, VERTEX_SIZE_BYTES, COLOR_OFFSET);
-        GL46.glEnableVertexAttribArray(1);
+        glEnableVertexArrayAttrib(vaoID, 0);
+        glEnableVertexArrayAttrib(vaoID, 1);
+        glEnableVertexArrayAttrib(vaoID, 2);
+        glEnableVertexArrayAttrib(vaoID, 3);
 
-        GL46.glVertexAttribPointer(2, TEX_COORDS_SIZE, GL46.GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
-        GL46.glEnableVertexAttribArray(2);
+        glVertexArrayAttribFormat(vaoID, 0, POS_SIZE, GL_FLOAT, false, POS_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 1, COLOR_SIZE, GL_FLOAT, false, COLOR_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 2, TEX_COORDS_SIZE, GL_FLOAT, false, TEX_COORDS_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 3, TEX_ID_SIZE, GL_FLOAT, false, TEX_ID_OFFSET);
 
-        GL46.glVertexAttribPointer(3, TEX_ID_SIZE, GL46.GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ID_OFFSET);
-        GL46.glEnableVertexAttribArray(3);
+        glVertexArrayAttribBinding(vaoID, 0, 0);
+        glVertexArrayAttribBinding(vaoID, 1, 0);
+        glVertexArrayAttribBinding(vaoID, 2, 0);
+        glVertexArrayAttribBinding(vaoID, 3, 0);
         vertices = null;
     }
 
     public void stop() {
-        GL46.glDeleteVertexArrays(vaoID);
-        GL46.glDeleteBuffers(vboID);
-        GL46.glDeleteBuffers(eboID);
-        GL46.glDisableVertexAttribArray(0);
-        GL46.glDisableVertexAttribArray(1);
-        GL46.glDisableVertexAttribArray(2);
-        GL46.glDisableVertexAttribArray(3);
+        glDeleteBuffers(vboID);
+        glDeleteBuffers(eboID);
+        glDeleteVertexArrays(vaoID);
     }
 
     public void render() {
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
-
         glBindVertexArray(vaoID);
-        GL46.glEnableVertexAttribArray(0);
-        GL46.glEnableVertexAttribArray(1);
-        GL46.glEnableVertexAttribArray(2);
-        GL46.glEnableVertexAttribArray(3);
 
         glDrawElements(GL_TRIANGLES, squares * 6, GL_UNSIGNED_INT, 0);
-
-        GL46.glDisableVertexAttribArray(0);
-        GL46.glDisableVertexAttribArray(1);
-        GL46.glDisableVertexAttribArray(2);
-        GL46.glDisableVertexAttribArray(3);
-        glBindVertexArray(0);
     }
 
     private void generateMeshForLayer(int layer) {

@@ -12,23 +12,18 @@ public class Framebuffer {
     public Framebuffer(int width, int height) {
         this.width = width;
         this.height = height;
-
-        fboID = glGenFramebuffers();
-        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
-
         this.textureId = initTexture();
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+        fboID = glCreateFramebuffers();
+        glNamedFramebufferTexture(fboID, GL_COLOR_ATTACHMENT0, textureId, 0);
 
-        int rboId = glGenRenderbuffers();
-        glBindRenderbuffer(GL_RENDERBUFFER, rboId);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, width, height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboId);
+        int rboId = glCreateRenderbuffers();
+        glNamedRenderbufferStorage(rboId, GL_DEPTH_COMPONENT32, width, height);
+        glNamedFramebufferRenderbuffer(fboID, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboId);
 
         if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw new RuntimeException("Could not create framebuffer.");
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     public void bind() {
