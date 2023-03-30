@@ -113,6 +113,12 @@ public class Shader {
         GL46.glUniformMatrix4fv(varLocation, false, matBuffer);
     }
 
+    public void uploadVec4f(String varName, float x, float y, float z, float w) {
+        int varLocation = GL46.glGetUniformLocation(shaderProgramId, varName);
+        attach();
+        GL46.glUniform4f(varLocation, x, y, z, w);
+    }
+
     public void uploadVec4i(String varName, int x, int y, int z, int w) {
         int varLocation = GL46.glGetUniformLocation(shaderProgramId, varName);
         attach();

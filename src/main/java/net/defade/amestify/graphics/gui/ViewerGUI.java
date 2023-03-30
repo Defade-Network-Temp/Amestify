@@ -16,7 +16,9 @@ import net.defade.amestify.world.World;
 import net.defade.amestify.world.chunk.pos.RegionPos;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
+import java.lang.Math;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,6 +115,7 @@ public class ViewerGUI extends GUI {
         Assets.CHUNK_SHADER.attach();
         Assets.CHUNK_SHADER.uploadMat4f("projectionUniform", camera.getProjectionMatrix());
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
+        uploadHighlightedBlock();
 
         Assets.BLOCK_SHEET.bind();
 
@@ -186,6 +189,31 @@ public class ViewerGUI extends GUI {
             }
         }
     }
+
+    private void uploadHighlightedBlock() {
+        // gl_FragCoord is in screen space, so we need to convert it to viewport space
+
+        Vector2f start = worldCoordsToViewport(new Vector2f((float) (Math.floor(getViewportOrthoX() / 16) * 16), (float) (Math.floor(getViewportOrthoY() / 16) * 16)));
+        Vector2f end = worldCoordsToViewport(new Vector2f((float) Math.floor(getViewportOrthoX() / 16) * 16 + 16, (float) Math.floor(getViewportOrthoY() / 16) * 16 + 16));
+
+        Assets.CHUNK_SHADER.uploadVec4f("highlightedBlock", start.x, start.y, end.x, end.y);
+    }
+
+    private Vector2f worldCoordsToViewport(Vector2f worldCoords) {
+        Matrix4f projectionMatrix = new Matrix4f(camera.getProjectionMatrix());
+        Matrix4f viewMatrix = new Matrix4f(camera.getViewMatrix());
+
+        Vector4f clipSpacePos = projectionMatrix.mul(viewMatrix).transform(new Vector4f(worldCoords.x, worldCoords.y, 0, 1));
+        Vector3f ndcSpacePos = new Vector3f(
+                clipSpacePos.x / clipSpacePos.w,
+                clipSpacePos.y / clipSpacePos.w,
+                clipSpacePos.z / clipSpacePos.w
+        );
+
+        return new Vector2f((ndcSpacePos.x + 1.0f) / 2.0f * framebuffer.getWidth(),
+                (ndcSpacePos.y + 1.0f) / 2.0f * framebuffer.getHeight());
+    }
+
 
     private float getViewportOrthoX() {
         float currentX = (float) (MouseListener.getX() - viewportPos.x);

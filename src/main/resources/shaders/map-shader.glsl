@@ -37,10 +37,15 @@ in vec2 fragmentTexCoords;
 in float fragmentTexId;
 
 uniform sampler2DArray textureSampler;
+uniform vec4 highlightedBlock;
 
 out vec4 color;
 
 void main() {
     color = texture(textureSampler, vec3(fragmentTexCoords, int(fragmentTexId)));
     color.rgb *= fragmentColor;
+
+    if(gl_FragCoord.x > highlightedBlock.x && gl_FragCoord.x < highlightedBlock.z && gl_FragCoord.y > highlightedBlock.y && gl_FragCoord.y < highlightedBlock.w) {
+        color.rgb *= vec3(0.5, 0.5, 0.5);
+    }
 }
