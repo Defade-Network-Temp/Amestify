@@ -107,37 +107,31 @@ public class RegionFile {
     public void calculateTextures() {
         for (int x = 0; x < 512; x++) {
             for (int z = 0; z < 512; z++) {
-                int arrayIndex = ((x << 9) + z) * TEXTURES_DEPTH;
+
                 int y = getHighestBlockAt(x, z);
                 if(y <= minY) {
                     continue;
                 }
 
-                int blockState = getBlockState(x, y, z);
-                BlockTexture texture = Assets.BLOCK_SHEET.getBlockTexture(blockState);
-
-                for (int layer = 0; layer < TEXTURES_DEPTH; layer++) {
-                    BlockTexture lastTexture = layer > 0 ? blockTextures[arrayIndex + layer - 1] : null;
-                    while (texture.isIgnored() || texture.equals(lastTexture)) {
+                int layer = 0;
+                BlockTexture lastTexture = null;
+                while (layer < TEXTURES_DEPTH) {
+                    BlockTexture texture = Assets.BLOCK_SHEET.getBlockTexture(getBlockState(x, y, z));
+                    while(texture.isIgnored() || texture.equals(lastTexture)) {
                         y--;
-                        if(y <= minY) {
-                            break;
-                        }
-
-                        blockState = getBlockState(x, y, z);
-                        texture = Assets.BLOCK_SHEET.getBlockTexture(blockState);
+                        if(y <= minY) break;
+                        texture = Assets.BLOCK_SHEET.getBlockTexture(getBlockState(x, y, z));
                     }
 
-                    blockTextures[arrayIndex + layer] = texture;
-                    biomes[arrayIndex + layer] = getChunk(x, z).getBiome(x, y,z);
+                    lastTexture = texture;
+                    int arrayIndex = (((x << 9) + z) * TEXTURES_DEPTH) + layer;
+                    blockTextures[arrayIndex] = texture;
+                    biomes[arrayIndex] = getBiome(x, y, z);
+
                     if(!texture.isTranslucent()) break;
-
+                    layer++;
                     y--;
-                    if(y <= minY) {
-                        break;
-                    }
-                    blockState = getBlockState(x, y, z);
-                    texture = Assets.BLOCK_SHEET.getBlockTexture(blockState);
+                    if (y <= minY) break;
                 }
             }
         }
