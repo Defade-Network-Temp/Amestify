@@ -5,6 +5,7 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 public class Camera {
+    private static final float MAX_ZOOM = 45f;
     private final Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
     private final Matrix4f inverseProjection;
@@ -65,10 +66,10 @@ public class Camera {
     }
 
     public void setZoom(float zoom) {
-        this.zoom = zoom;
+        this.zoom = Math.min(zoom, MAX_ZOOM);
     }
 
     public void addZoom(float value) {
-        this.zoom += value;
+        this.zoom = Math.min(zoom + value, MAX_ZOOM);
     }
 }

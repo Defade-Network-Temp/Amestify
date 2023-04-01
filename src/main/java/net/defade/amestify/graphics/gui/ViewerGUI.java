@@ -129,7 +129,7 @@ public class ViewerGUI extends GUI {
 
         Assets.BLOCK_SHEET.bind();
 
-        regionRenderers.values().forEach(RegionRenderer::render);
+        renderRegions();
 
         Assets.BLOCK_SHEET.unbind();
         Assets.CHUNK_SHADER.detach();
@@ -213,6 +213,18 @@ public class ViewerGUI extends GUI {
                 (ndcSpacePos.y + 1.0f) / 2.0f * framebuffer.getHeight());
     }
 
+    private void renderRegions() {
+        int minSeenRegionX = (int) Math.floor(camera.getPosition().x / 16 / 16 / 32);
+        int maxSeenRegionX = (int) Math.floor((camera.getPosition().x + camera.getProjectionSize().x * camera.getZoom()) / 16 / 16 / 32);
+        int minSeenRegionZ = (int) Math.floor(camera.getPosition().y / 16 / 16 / 32);
+        int maxSeenRegionZ = (int) Math.floor((camera.getPosition().y + camera.getProjectionSize().y * camera.getZoom()) / 16 / 16 / 32);
+
+        regionRenderers.forEach((region, renderer) -> {
+            if(region.x() >= minSeenRegionX && region.x() <= maxSeenRegionX && region.z() >= minSeenRegionZ && region.z() <= maxSeenRegionZ) {
+                renderer.render();
+            }
+        });
+    }
 
     private float getViewportOrthoX() {
         float currentX = (float) (MouseListener.getX() - viewportPos.x);
