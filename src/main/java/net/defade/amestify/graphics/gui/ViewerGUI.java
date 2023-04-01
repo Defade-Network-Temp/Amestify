@@ -159,6 +159,40 @@ public class ViewerGUI extends GUI {
 
         if(isViewDisabled) return;
 
+        if(isMouseInViewport()) {
+            if (MouseListener.getScrollY() != 0.0f) {
+                Vector2f cameraCenter = new Vector2f(camera.getPosition()).add(
+                        new Vector2f(
+                                camera.getPosition().x + camera.getProjectionSize().x * camera.getZoom(),
+                                camera.getPosition().y + camera.getProjectionSize().y * camera.getZoom()
+                        )
+                ).div(2);
+
+                float addValue = (float) Math.pow(Math.abs(MouseListener.getScrollY() * 0.1f), 1 / camera.getZoom());
+                addValue *= -MouseListener.getScrollY();
+                camera.addZoom(addValue);
+                camera.adjustProjection();
+
+                if(clickOrigin == null) { // Only adjust the camera if the user is not dragging
+                    Vector2f newCameraCenter = new Vector2f(camera.getPosition()).add(
+                            new Vector2f(
+                                    camera.getPosition().x + camera.getProjectionSize().x * camera.getZoom(),
+                                    camera.getPosition().y + camera.getProjectionSize().y * camera.getZoom()
+                            )
+                    ).div(2);
+
+                    Vector2f delta = new Vector2f(cameraCenter).sub(newCameraCenter);
+                    camera.getPosition().add(delta);
+                }
+            }
+
+            if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE)) { // TODO: Change to key
+                resetCameraLerpTime = 0;
+                cameraLerpZoom = camera.getZoom();
+                cameraLerpOrigin = new Vector2f(camera.getPosition());
+            }
+        }
+
         if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
             if(clickOrigin == null && isMouseInViewport()) {
                 clickOrigin = new Vector2f(getViewportOrthoX(), getViewportOrthoY());
@@ -171,21 +205,6 @@ public class ViewerGUI extends GUI {
             }
         } else {
             clickOrigin = null;
-        }
-
-        if(isMouseInViewport()) {
-            if (MouseListener.getScrollY() != 0.0f) {
-                float addValue = (float) Math.pow(Math.abs(MouseListener.getScrollY() * 0.1f), 1 / camera.getZoom());
-                addValue *= -MouseListener.getScrollY();
-                camera.addZoom(addValue);
-                camera.adjustProjection();
-            }
-
-            if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE)) { // TODO: Change to key
-                resetCameraLerpTime = 0;
-                cameraLerpZoom = camera.getZoom();
-                cameraLerpOrigin = new Vector2f(camera.getPosition());
-            }
         }
     }
 
