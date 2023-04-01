@@ -106,6 +106,16 @@ public class ViewerGUI extends GUI {
     }
 
     private void renderMap(float deltaTime) {
+        ImGui.begin("Map", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+
+        ImVec2 windowSize = getLargestSizeForViewport();
+        ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
+
+        ImGui.setCursorPos(windowPos.x, windowPos.y);
+
+        viewportPos.set(getViewPortPos());
+        viewportSize.set(windowSize);
+
         updateControllers(deltaTime);
         framebuffer.bind();
 
@@ -128,18 +138,7 @@ public class ViewerGUI extends GUI {
 
         framebuffer.unbind();
 
-        ImGui.begin("Map", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-
-        ImVec2 windowSize = getLargestSizeForViewport();
-        ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
-
-        ImGui.setCursorPos(windowPos.x, windowPos.y);
-
-        viewportPos.set(getViewPortPos());
-        viewportSize.set(windowSize);
-
         ImGui.image(framebuffer.getTextureId(), windowSize.x, windowSize.y, 0, 1, 1, 0);
-
         ImGui.end();
     }
 
@@ -243,7 +242,8 @@ public class ViewerGUI extends GUI {
 
     private boolean isMouseInViewport() {
         return MouseListener.getX() >= viewportPos.x && MouseListener.getX() <= viewportPos.x + viewportSize.x &&
-                MouseListener.getY() >= viewportPos.y && MouseListener.getY() <= viewportPos.y + viewportSize.y;
+                MouseListener.getY() >= viewportPos.y && MouseListener.getY() <= viewportPos.y + viewportSize.y &&
+                ImGui.isWindowHovered();
     }
 
     private void renderGrid() {
