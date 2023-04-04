@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Biome {
+    public static Biome PLAINS;
+
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(0);
     private static final List<Biome> BIOMES = new ArrayList<>();
 
@@ -51,6 +53,10 @@ public final class Biome {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static void registerBiome(Biome biome) {
+        BIOMES.add(biome);
     }
 
     public int id() {
@@ -253,7 +259,10 @@ public final class Biome {
                             .build())
                     .build();
 
-            BIOMES.add(biome);
+            registerBiome(biome);
+            if(biomeId.equals("minecraft:plains")) {
+                PLAINS = biome;
+            }
         }
     }
 

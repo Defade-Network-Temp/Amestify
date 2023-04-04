@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.gui;
+package net.defade.amestify.graphics.gui.viewer;
 
 import imgui.ImGui;
 import imgui.ImVec2;
@@ -11,6 +11,7 @@ import net.defade.amestify.graphics.Assets;
 import net.defade.amestify.graphics.Camera;
 import net.defade.amestify.graphics.Framebuffer;
 import net.defade.amestify.graphics.Window;
+import net.defade.amestify.graphics.gui.GUI;
 import net.defade.amestify.graphics.gui.map.RegionRenderer;
 import net.defade.amestify.world.World;
 import net.defade.amestify.world.chunk.pos.RegionPos;
@@ -28,6 +29,8 @@ import static org.lwjgl.opengl.GL46.*;
 public class ViewerGUI extends GUI {
     private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
     private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
+    private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
+    private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
     private boolean isViewDisabled = false;
 
     private final Map<RegionPos, RegionRenderer> regionRenderers = new HashMap<>();
@@ -63,6 +66,9 @@ public class ViewerGUI extends GUI {
                 });
             }
         }
+
+        biomeCreatorWindow.render();
+        biomeSelectorWindow.render();
 
         renderMap(deltaTime);
 

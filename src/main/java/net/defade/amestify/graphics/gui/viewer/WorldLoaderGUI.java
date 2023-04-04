@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.gui;
+package net.defade.amestify.graphics.gui.viewer;
 
 import imgui.ImGui;
 import imgui.ImGuiStyle;
