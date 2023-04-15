@@ -59,6 +59,10 @@ public final class Biome {
         BIOMES.add(biome);
     }
 
+    public static void unregisterBiome(Biome biome) {
+        BIOMES.remove(biome);
+    }
+
     public int id() {
         return this.id;
     }

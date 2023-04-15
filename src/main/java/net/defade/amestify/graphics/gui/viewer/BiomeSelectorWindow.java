@@ -1,7 +1,6 @@
 package net.defade.amestify.graphics.gui.viewer;
 
 import imgui.ImGui;
-import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
@@ -15,12 +14,15 @@ public class BiomeSelectorWindow {
         ImGui.begin("Biome Picker");
 
         renderBiomeList();
+        ImGui.text("Selected Biome: " + selectedBiome.name().asString());
+
+        renderDeleteBiome();
 
         ImGui.end();
     }
 
     private void renderBiomeList() {
-        boolean shouldEndList = ImGui.beginListBox("##Biomes", ImGui.getContentRegionAvailX(), ImGui.getContentRegionAvailY());
+        boolean shouldEndList = ImGui.beginListBox("##Biomes", ImGui.getContentRegionAvailX(), ImGui.getContentRegionAvailY() - 46);
 
         ImGui.pushStyleColor(ImGuiCol.Text, 255, 204, 0, 255); // Yellow
         for (String createdBiome : getCreatedBiomes()) {
@@ -39,6 +41,20 @@ public class BiomeSelectorWindow {
         }
 
         if(shouldEndList) ImGui.endListBox();
+    }
+
+    private void renderDeleteBiome() {
+        boolean canDeleteBiome = selectedBiome != Biome.PLAINS;
+        if(!canDeleteBiome) ImGui.beginDisabled();
+        ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
+
+        if(ImGui.button("Delete Biome")) {
+            Biome.unregisterBiome(selectedBiome);
+            selectedBiome = Biome.PLAINS;
+        }
+
+        ImGui.popStyleColor();
+        if(!canDeleteBiome) ImGui.endDisabled();
     }
 
     private static String[] getVanillaBiomes() {
