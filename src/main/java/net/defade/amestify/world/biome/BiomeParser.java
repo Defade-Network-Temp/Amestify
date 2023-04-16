@@ -13,12 +13,8 @@ public class BiomeParser {
         writeSizedString(biome.name().domain(), dataOutputStream);
         writeSizedString(biome.name().path(), dataOutputStream);
 
-        dataOutputStream.writeFloat(biome.depth());
         dataOutputStream.writeFloat(biome.temperature());
-        dataOutputStream.writeFloat(biome.scale());
         dataOutputStream.writeFloat(biome.downfall());
-
-        writeSizedString(biome.category().toString(), dataOutputStream);
 
         writeBiomeEffects(biome.effects(), dataOutputStream);
 

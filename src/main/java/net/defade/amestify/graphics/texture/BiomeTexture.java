@@ -37,13 +37,13 @@ public class BiomeTexture {
         return grassColor;
     }
 
-    public static int getFoliageColor(int foliageColorEffect, float biomeTemperature, float biomeDepth) {
+    public static int getFoliageColor(int foliageColorEffect, float biomeTemperature, float biomeDownfall) {
         int foliageColor;
 
         if(foliageColorEffect != -1) {
             foliageColor = (int) (foliageColorEffect & 0xFFFFFFFFL) | 0xFF000000;
         } else {
-            foliageColor = foliageColor(biomeTemperature, biomeDepth);
+            foliageColor = foliageColor(biomeTemperature, biomeDownfall);
         }
 
         return foliageColor;
@@ -53,24 +53,24 @@ public class BiomeTexture {
         return (int) (waterColor & 0xFFFFFFFFL) | 0xFF000000;
     }
 
-    private static int grassColor(double temperature, double humidity) {
+    private static int grassColor(double temperature, double downfall) {
         temperature = Math.max(0.0, Math.min(temperature, 1.0));
-        humidity = Math.max(0.0, Math.min(humidity, 1.0));
+        downfall = Math.max(0.0, Math.min(downfall, 1.0));
 
-        humidity = humidity * temperature;
+        downfall = downfall * temperature;
         int i = (int) ((1.0D - temperature) * 255.0D);
-        int j = (int) ((1.0D - humidity) * 255.0D);
+        int j = (int) ((1.0D - downfall) * 255.0D);
         int k = j << 8 | i;
         return k > grassColorMap.length ? -65281 : grassColorMap[k];
     }
 
-    private static int foliageColor(double temperature, double humidity) {
+    private static int foliageColor(double temperature, double downfall) {
         temperature = Math.max(0.0, Math.min(temperature, 1.0));
-        humidity = Math.max(0.0, Math.min(humidity, 1.0));
+        downfall = Math.max(0.0, Math.min(downfall, 1.0));
 
-        humidity = humidity * temperature;
+        downfall = downfall * temperature;
         int i = (int) ((1.0D - temperature) * 255.0D);
-        int j = (int) ((1.0D - humidity) * 255.0D);
+        int j = (int) ((1.0D - downfall) * 255.0D);
         return foliageColorMap[j << 8 | i];
     }
 }

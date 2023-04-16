@@ -30,22 +30,16 @@ public final class Biome {
     private final int id = ID_COUNTER.getAndIncrement();
 
     private final NamespaceID name;
-    private final float depth;
     private final float temperature;
-    private final float scale;
     private final float downfall;
-    private final Category category;
     private final BiomeEffects effects;
     private final Precipitation precipitation;
     private final TemperatureModifier temperatureModifier;
 
-    Biome(NamespaceID name, float depth, float temperature, float scale, float downfall, Category category, BiomeEffects effects, Precipitation precipitation, TemperatureModifier temperatureModifier) {
+    Biome(NamespaceID name, float temperature, float downfall, BiomeEffects effects, Precipitation precipitation, TemperatureModifier temperatureModifier) {
         this.name = name;
-        this.depth = depth;
         this.temperature = temperature;
-        this.scale = scale;
         this.downfall = downfall;
-        this.category = category;
         this.effects = effects;
         this.precipitation = precipitation;
         this.temperatureModifier = temperatureModifier;
@@ -71,24 +65,12 @@ public final class Biome {
         return this.name;
     }
 
-    public float depth() {
-        return this.depth;
-    }
-
     public float temperature() {
         return this.temperature;
     }
 
-    public float scale() {
-        return this.scale;
-    }
-
     public float downfall() {
         return this.downfall;
-    }
-
-    public Category category() {
-        return this.category;
     }
 
     public BiomeEffects effects() {
@@ -120,24 +102,14 @@ public final class Biome {
         NONE, RAIN, SNOW
     }
 
-    public enum Category {
-        NONE, TAIGA, EXTREME_HILLS, JUNGLE, MESA, PLAINS,
-        SAVANNA, ICY, THE_END, BEACH, FOREST, OCEAN,
-        DESERT, RIVER, SWAMP, MUSHROOM, NETHER, UNDERGROUND,
-        MOUNTAIN
-    }
-
     public enum TemperatureModifier {
         NONE, FROZEN
     }
 
     public static final class Builder {
         private NamespaceID name;
-        private float depth = 0.2f;
         private float temperature = 0.25f;
-        private float scale = 0.2f;
         private float downfall = 0.8f;
-        private Category category = Category.NONE;
         private BiomeEffects effects = DEFAULT_EFFECTS;
         private Precipitation precipitation = Precipitation.RAIN;
         private TemperatureModifier temperatureModifier = TemperatureModifier.NONE;
@@ -150,28 +122,13 @@ public final class Biome {
             return this;
         }
 
-        public Builder depth(float depth) {
-            this.depth = depth;
-            return this;
-        }
-
         public Builder temperature(float temperature) {
             this.temperature = temperature;
             return this;
         }
 
-        public Builder scale(float scale) {
-            this.scale = scale;
-            return this;
-        }
-
         public Builder downfall(float downfall) {
             this.downfall = downfall;
-            return this;
-        }
-
-        public Builder category(Category category) {
-            this.category = category;
             return this;
         }
 
@@ -193,17 +150,14 @@ public final class Biome {
         public Biome build() {
             return new Biome(
                     name,
-                    depth,
                     temperature,
-                    scale,
                     downfall,
-                    category,
                     BiomeEffects.builder()
                             .fogColor(effects.fogColor())
                             .skyColor(effects.skyColor())
                             .waterColor(BiomeTexture.getWaterColor(effects.waterColor()))
                             .waterFogColor(effects.waterFogColor())
-                            .foliageColor(BiomeTexture.getFoliageColor(effects.foliageColor(), temperature, depth))
+                            .foliageColor(BiomeTexture.getFoliageColor(effects.foliageColor(), temperature, downfall))
                             .grassColor(BiomeTexture.getGrassColor(effects.grassColor(), temperature, downfall))
                             .grassColorModifier(effects.grassColorModifier())
                             .biomeParticle(effects.biomeParticle())
