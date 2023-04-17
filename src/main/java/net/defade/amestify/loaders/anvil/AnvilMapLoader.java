@@ -2,53 +2,35 @@ package net.defade.amestify.loaders.anvil;
 
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.World;
-import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.pos.RegionPos;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
-public class AnvilMap {
+public class AnvilMapLoader {
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     private final Path regionPath;
     private final int minY;
     private final int maxY;
 
-    private final Map<RegionPos, RegionFile> regionFileCache = new HashMap<>();
-
-    public AnvilMap(Path anvilPath, int minY, int maxY) {
+    public AnvilMapLoader(Path anvilPath, int minY, int maxY) {
         this.regionPath = anvilPath.resolve("region");
         this.minY = minY;
         this.maxY = maxY;
-    }
-
-    public CompletableFuture<RegionFile> loadRegion(RegionPos regionPos) {
-        return loadRegion(regionPos, null);
     }
 
     private CompletableFuture<RegionFile> loadRegion(RegionPos regionPos, ProgressTracker progressTracker) {
         CompletableFuture<RegionFile> completableFuture = new CompletableFuture<>();
             executor.submit(() -> {
                 try {
-                    RegionFile regionFile = regionFileCache.get(regionPos);
-
-                    if (regionFile == null) {
-                        regionFile = new RegionFile(progressTracker, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY);
-                        regionFileCache.put(regionPos, regionFile);
-                    } else if(progressTracker != null) {
-                        progressTracker.increment(1024);
-                    }
-
-                    completableFuture.complete(regionFile);
+                    completableFuture.complete(new RegionFile(progressTracker, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY));
                 } catch (Throwable exception) {
                     completableFuture.completeExceptionally(exception);
                 }
@@ -94,8 +76,6 @@ public class AnvilMap {
                 CompletableFuture.allOf(loadingFutures.toArray(new CompletableFuture[0])).whenComplete((unused, throwable) -> {
                     completableFuture.complete(world);
                 });
-
-
             } catch (Throwable exception) {
                 completableFuture.completeExceptionally(exception);
             }

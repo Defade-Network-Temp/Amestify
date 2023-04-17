@@ -4,7 +4,7 @@ import imgui.ImGui;
 import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
-import net.defade.amestify.loaders.anvil.AnvilMap;
+import net.defade.amestify.loaders.anvil.AnvilMapLoader;
 import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.World;
@@ -71,7 +71,7 @@ public class WorldLoaderGUI {
         if(isPathValid()) {
             centerNextItem("Load");
             if(ImGui.button("Load")) {
-                worldFuture = new AnvilMap(worldPath, -64, 320).loadWorld(progressTracker);
+                worldFuture = new AnvilMapLoader(worldPath, -64, 320).loadWorld(progressTracker);
                 worldFuture.whenComplete((world, throwable) -> {
                     if(throwable != null) {
                         worldFutureException = throwable;
