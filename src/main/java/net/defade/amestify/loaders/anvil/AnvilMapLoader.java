@@ -26,11 +26,11 @@ public class AnvilMapLoader {
         this.maxY = maxY;
     }
 
-    private CompletableFuture<RegionFile> loadRegion(RegionPos regionPos, ProgressTracker progressTracker) {
+    private CompletableFuture<RegionFile> loadRegion(World world, RegionPos regionPos, ProgressTracker progressTracker) {
         CompletableFuture<RegionFile> completableFuture = new CompletableFuture<>();
             executor.submit(() -> {
                 try {
-                    completableFuture.complete(new RegionFile(progressTracker, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY));
+                    completableFuture.complete(new RegionFile(progressTracker, world, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY));
                 } catch (Throwable exception) {
                     completableFuture.completeExceptionally(exception);
                 }
@@ -62,7 +62,7 @@ public class AnvilMapLoader {
                     int regionX = Integer.parseInt(split[1]);
                     int regionZ = Integer.parseInt(split[2]);
 
-                    loadingFutures.add(loadRegion(new RegionPos(regionX, regionZ), progressTracker).whenComplete((regionFile, throwable) -> {
+                    loadingFutures.add(loadRegion(world, new RegionPos(regionX, regionZ), progressTracker).whenComplete((regionFile, throwable) -> {
                         if(throwable != null) {
                             completableFuture.completeExceptionally(throwable);
                             executor.shutdownNow();

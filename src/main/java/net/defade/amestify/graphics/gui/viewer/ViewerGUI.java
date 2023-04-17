@@ -58,7 +58,7 @@ public class ViewerGUI extends GUI {
             disableView();
         } else {
             if(world == null) {
-                world = worldLoaderGUI.getWorld();
+                setWorld(worldLoaderGUI.getWorld());
                 world.getRegions().forEach((region) -> {
                     RegionRenderer regionRenderer = new RegionRenderer(region);
                     regionRenderer.init();
@@ -80,6 +80,12 @@ public class ViewerGUI extends GUI {
     @Override
     public boolean usesImGui() {
         return true;
+    }
+
+    private void setWorld(World world) {
+        this.world = world;
+        biomeCreatorWindow.setWorld(world);
+        biomeSelectorWindow.setWorld(world);
     }
 
     private void setupDockspace() {

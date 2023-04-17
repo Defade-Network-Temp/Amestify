@@ -30,7 +30,7 @@ public class AmethystSaver {
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
         CompletableFuture.runAsync(() -> {
-            final Collection<Biome> biomes = Biome.unmodifiableCollection();
+            final Collection<Biome> biomes = world.unmodifiableBiomeCollection();
             final Collection<Chunk> chunks = world.getChunks();
 
             try {

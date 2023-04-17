@@ -3,6 +3,7 @@ package net.defade.amestify.loaders.anvil;
 import net.defade.amestify.graphics.Assets;
 import net.defade.amestify.graphics.texture.block.BlockTexture;
 import net.defade.amestify.utils.ProgressTracker;
+import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.pos.ChunkPos;
@@ -26,7 +27,7 @@ public class RegionFile {
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
     private final Biome[] biomes = new Biome[512 * 512 * TEXTURES_DEPTH];
 
-    public RegionFile(ProgressTracker progressTracker, Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
+    public RegionFile(ProgressTracker progressTracker, World world, Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
         this.regionPos = regionPos;
         this.minY = minY;
 
@@ -51,6 +52,7 @@ public class RegionFile {
             CompressionType compressionType = CompressionType.getFromID(compressionScheme);
 
             Chunk chunk = new Chunk(
+                    world,
                     getChunkPosFromIndex(i).add(regionPos.x() * 32, regionPos.z() * 32),
                     minY, maxY, // TODO minY and maxY
                     compressionType, chunkInputStream

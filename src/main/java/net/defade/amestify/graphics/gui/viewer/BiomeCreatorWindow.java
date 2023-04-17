@@ -4,12 +4,15 @@ import imgui.ImGui;
 import imgui.flag.ImGuiColorEditFlags;
 import imgui.type.ImString;
 import net.defade.amestify.utils.NamespaceID;
+import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
 
 import java.awt.Color;
 
 public class BiomeCreatorWindow {
+    private World world = null;
+
     private final float[] pickerColor = new float[3];
     private final ImString biomeName = new ImString();
 
@@ -24,9 +27,14 @@ public class BiomeCreatorWindow {
         ImGui.end();
     }
 
+    public void setWorld(World world) {
+        this.world = world;
+    }
+
     private void renderBiomeSave() {
         ImGui.inputTextWithHint("##Biome Name", "Biome Name", biomeName);
         ImGui.sameLine();
+        if(world == null) ImGui.beginDisabled();
         if(ImGui.button("Save Biome")) {
             Biome newBiome = Biome.builder()
                     .name(NamespaceID.from(biomeName.get()))
@@ -39,8 +47,9 @@ public class BiomeCreatorWindow {
                             .grassColor(new Color(Settings.GRASS_COLOR.getColor()[0], Settings.GRASS_COLOR.getColor()[1], Settings.GRASS_COLOR.getColor()[2]).getRGB())
                             .build())
                     .build();
-            Biome.registerBiome(newBiome);
+            world.registerBiome(newBiome);
         }
+        if(world == null) ImGui.endDisabled();
     }
 
     private void renderColorPicker() {

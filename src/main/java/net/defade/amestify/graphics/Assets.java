@@ -5,8 +5,6 @@ import net.defade.amestify.graphics.texture.block.BlockSheet;
 import net.defade.amestify.graphics.texture.block.generator.BlockTextureData;
 import net.defade.amestify.graphics.texture.block.generator.BlockTextureMap;
 import net.defade.amestify.world.Block;
-import net.defade.amestify.world.biome.Biome;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +23,6 @@ public class Assets {
     public static void init() throws IOException {
         Block.init();
         BiomeTexture.init();
-        Biome.init();
 
         BlockTextureData[] blockTextureData = new BlockTextureMap().init();
         BLOCK_SHEET = new BlockSheet(blockTextureData, moveTexturesToTemp());
