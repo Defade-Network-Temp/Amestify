@@ -22,7 +22,7 @@ public class RegionFile {
 
     private final int minY;
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
-    private final Biome[] biomes = new Biome[512 * 512 * TEXTURES_DEPTH];
+    private final Biome[] biomes = new Biome[128 * 128 * TEXTURES_DEPTH]; // Biomes in minecraft are stored in 4x4 blocks
 
     public RegionFile(ProgressTracker progressTracker, World world, Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
         this.regionPos = regionPos;
@@ -74,7 +74,7 @@ public class RegionFile {
     }
 
     public Biome getMapViewerBiome(int x, int z, int layer) {
-        return biomes[(((x << 9) + z) * TEXTURES_DEPTH) + layer];
+        return biomes[((((x / 4) << 7) + (z / 4)) * TEXTURES_DEPTH) + layer];
     }
 
     public void calculateTexturesForChunk(Chunk chunk) {
@@ -99,9 +99,8 @@ public class RegionFile {
                     lastTexture = texture;
                     int normalizedX = x & 0x1FF;
                     int normalizedZ = z & 0x1FF;
-                    int arrayIndex = (((normalizedX << 9) + normalizedZ) * TEXTURES_DEPTH) + layer;
-                    blockTextures[arrayIndex] = texture;
-                    biomes[arrayIndex] = chunk.getBiome(x, y, z);
+                    blockTextures[(((normalizedX << 9) + normalizedZ) * TEXTURES_DEPTH) + layer] = texture;
+                    biomes[((((normalizedX / 4) << 7) + (normalizedZ / 4)) * TEXTURES_DEPTH) + layer] = chunk.getBiome(x, y, z);
 
                     if(!texture.isTranslucent()) break;
                     layer++;
