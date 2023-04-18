@@ -33,6 +33,9 @@ public class RegionRenderer {
 
     private int vaoID, vboID, eboID;
 
+    private boolean buffersInitialized = false;
+    private boolean isDirty = false;
+
     public RegionRenderer(RegionFile regionFile) {
         this.regionFile = regionFile;
         for (int layer = RegionFile.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
@@ -44,13 +47,24 @@ public class RegionRenderer {
         this.vertices = vertices;
     }
 
-    public void init() {
+    public void updateMesh() {
+        this.vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
+        squares = 0;
+
+        for (int layer = RegionFile.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
+            generateMeshForLayer(layer);
+        }
+
+        float[] vertices = new float[squares * 4 * VERTEX_SIZE];
+        System.arraycopy(this.vertices, 0, vertices, 0, vertices.length);
+
+        this.vertices = vertices;
+        isDirty = true;
+    }
+
+    private void initBuffers() {
         vboID = glCreateBuffers();
-        glNamedBufferData(vboID, vertices, GL_STATIC_DRAW);
-
         eboID = glCreateBuffers();
-        glNamedBufferData(eboID, generateIndices(), GL_STATIC_DRAW);
-
         vaoID = glCreateVertexArrays();
 
         glVertexArrayVertexBuffer(vaoID, 0, vboID, 0, VERTEX_SIZE_BYTES);
@@ -70,6 +84,12 @@ public class RegionRenderer {
         glVertexArrayAttribBinding(vaoID, 1, 0);
         glVertexArrayAttribBinding(vaoID, 2, 0);
         glVertexArrayAttribBinding(vaoID, 3, 0);
+    }
+
+    private void updateBuffers() {
+        glNamedBufferData(vboID, vertices, GL_STATIC_DRAW);
+        glNamedBufferData(eboID, generateIndices(), GL_STATIC_DRAW);
+
         vertices = null;
     }
 
@@ -80,9 +100,17 @@ public class RegionRenderer {
     }
 
     public void render() {
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
-        glBindVertexArray(vaoID);
+        if(!buffersInitialized) {
+            initBuffers();
+            buffersInitialized = true;
+        }
 
+        if(isDirty) {
+            updateBuffers();
+            isDirty = false;
+        }
+
+        glBindVertexArray(vaoID);
         glDrawElements(GL_TRIANGLES, squares * 6, GL_UNSIGNED_INT, 0);
     }
 

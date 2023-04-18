@@ -12,16 +12,13 @@ import net.defade.amestify.graphics.Camera;
 import net.defade.amestify.graphics.Framebuffer;
 import net.defade.amestify.graphics.Window;
 import net.defade.amestify.graphics.gui.GUI;
-import net.defade.amestify.graphics.gui.map.RegionRenderer;
+import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.world.World;
-import net.defade.amestify.world.chunk.pos.RegionPos;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import java.lang.Math;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
@@ -33,7 +30,6 @@ public class ViewerGUI extends GUI {
     private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
     private boolean isViewDisabled = false;
 
-    private final Map<RegionPos, RegionRenderer> regionRenderers = new HashMap<>();
     private final Framebuffer framebuffer = new Framebuffer(1920, 1080);
 
     private final ImVec2 viewportPos = new ImVec2();
@@ -59,11 +55,6 @@ public class ViewerGUI extends GUI {
         } else {
             if(world == null) {
                 setWorld(worldLoaderGUI.getWorld());
-                world.getRegions().forEach((region) -> {
-                    RegionRenderer regionRenderer = new RegionRenderer(region);
-                    regionRenderer.init();
-                    regionRenderers.put(region.getRegionPos(), regionRenderer);
-                });
             }
         }
 
@@ -245,16 +236,18 @@ public class ViewerGUI extends GUI {
     }
 
     private void renderRegions() {
+        if(world == null) return;
+
         int minSeenRegionX = (int) Math.floor(camera.getPosition().x / 16 / 16 / 32);
         int maxSeenRegionX = (int) Math.floor((camera.getPosition().x + camera.getProjectionSize().x * camera.getZoom()) / 16 / 16 / 32);
         int minSeenRegionZ = (int) Math.floor(camera.getPosition().y / 16 / 16 / 32);
         int maxSeenRegionZ = (int) Math.floor((camera.getPosition().y + camera.getProjectionSize().y * camera.getZoom()) / 16 / 16 / 32);
 
-        regionRenderers.forEach((region, renderer) -> {
-            if(region.x() >= minSeenRegionX && region.x() <= maxSeenRegionX && region.z() >= minSeenRegionZ && region.z() <= maxSeenRegionZ) {
-                renderer.render();
+        for (RegionFile region : world.getRegions()) {
+            if(region.getRegionPos().x() >= minSeenRegionX && region.getRegionPos().x() <= maxSeenRegionX && region.getRegionPos().z() >= minSeenRegionZ && region.getRegionPos().z() <= maxSeenRegionZ) {
+                region.getRenderer().render();
             }
-        });
+        }
     }
 
     private float getViewportOrthoX() {

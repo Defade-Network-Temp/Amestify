@@ -114,7 +114,7 @@ public class World {
 
     public void unregisterBiome(Biome biome) {
         biomes.remove(biome.id());
-        // TODO remove every block on the map that has this biome
+        getRegions().forEach(regionFile -> regionFile.unregisterBiome(biome));
     }
 
     public void addRegion(RegionFile regionFile) {
