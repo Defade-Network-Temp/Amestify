@@ -14,14 +14,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 public class RegionFile {
     public static final int TEXTURES_DEPTH = 3;
 
     private final RegionPos regionPos;
-    private final Chunk[] chunks = new Chunk[1024];
 
     private final int minY;
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
@@ -62,7 +59,7 @@ public class RegionFile {
                 continue;
             }
 
-            chunks[i] = chunk;
+            calculateTexturesForChunk(chunk);
         }
 
         regionFile.close();
@@ -70,32 +67,6 @@ public class RegionFile {
 
     public RegionPos getRegionPos() {
         return regionPos;
-    }
-
-    public Chunk getChunk(int x, int z) {
-        return chunks[getChunkIndex(x >> 4, z >> 4)];
-    }
-
-    public List<Chunk> getChunks() {
-        return Arrays.asList(chunks);
-    }
-
-    public int getBlockState(int x, int y, int z) {
-        Chunk chunk = getChunk(x, z);
-        if(chunk == null) return 0;
-        return chunk.getBlockState(x, y, z);
-    }
-
-    public Biome getBiome(int x, int y, int z) {
-        Chunk chunk = getChunk(x, z);
-        if(chunk == null) return null;
-        return chunk.getBiome(x, y, z);
-    }
-
-    public int getHighestBlockAt(int x, int z) {
-        Chunk chunk = getChunk(x, z);
-        if(chunk == null) return minY;
-        return chunk.getHighestBlockAt(x, z);
     }
 
     public BlockTexture getMapViewerTextureLayer(int x, int z, int layer) {
@@ -106,11 +77,11 @@ public class RegionFile {
         return biomes[(((x << 9) + z) * TEXTURES_DEPTH) + layer];
     }
 
-    public void calculateTextures() {
-        for (int x = 0; x < 512; x++) {
-            for (int z = 0; z < 512; z++) {
+    public void calculateTexturesForChunk(Chunk chunk) {
+        for (int x = chunk.getChunkPos().x() * 16; x < chunk.getChunkPos().x() * 16 + 16; x++) {
+            for (int z = chunk.getChunkPos().z() * 16; z < chunk.getChunkPos().z() * 16 + 16; z++) {
 
-                int y = getHighestBlockAt(x, z);
+                int y = chunk.getHighestBlockAt(x, z);
                 if(y <= minY) {
                     continue;
                 }
@@ -118,17 +89,19 @@ public class RegionFile {
                 int layer = 0;
                 BlockTexture lastTexture = null;
                 while (layer < TEXTURES_DEPTH) {
-                    BlockTexture texture = Assets.BLOCK_SHEET.getBlockTexture(getBlockState(x, y, z));
+                    BlockTexture texture = Assets.BLOCK_SHEET.getBlockTexture(chunk.getBlockState(x, y, z));
                     while(texture.isIgnored() || texture.equals(lastTexture)) {
                         y--;
                         if(y <= minY) break;
-                        texture = Assets.BLOCK_SHEET.getBlockTexture(getBlockState(x, y, z));
+                        texture = Assets.BLOCK_SHEET.getBlockTexture(chunk.getBlockState(x, y, z));
                     }
 
                     lastTexture = texture;
-                    int arrayIndex = (((x << 9) + z) * TEXTURES_DEPTH) + layer;
+                    int normalizedX = x & 0x1FF;
+                    int normalizedZ = z & 0x1FF;
+                    int arrayIndex = (((normalizedX << 9) + normalizedZ) * TEXTURES_DEPTH) + layer;
                     blockTextures[arrayIndex] = texture;
-                    biomes[arrayIndex] = getBiome(x, y, z);
+                    biomes[arrayIndex] = chunk.getBiome(x, y, z);
 
                     if(!texture.isTranslucent()) break;
                     layer++;
@@ -136,10 +109,6 @@ public class RegionFile {
                     if (y <= minY) break;
                 }
             }
-        }
-
-        for (Chunk chunk : chunks) {
-            if(chunk != null) chunk.clearHeightMap();
         }
     }
 

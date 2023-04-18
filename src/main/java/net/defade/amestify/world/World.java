@@ -7,10 +7,7 @@ import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
-import net.defade.amestify.world.chunk.Chunk;
-import net.defade.amestify.world.chunk.pos.ChunkPos;
 import net.defade.amestify.world.chunk.pos.RegionPos;
-
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,7 +20,6 @@ public class World {
     private final Biome plainsBiome;
 
     private final Map<RegionPos, RegionFile> regionFiles = new HashMap<>();
-    private final Map<ChunkPos, Chunk> chunks = new HashMap<>();
 
     public World() throws FileNotFoundException {
         InputStream biomesJsonInputStream = Main.class.getClassLoader().getResourceAsStream("biomes.json");
@@ -123,13 +119,6 @@ public class World {
 
     public void addRegion(RegionFile regionFile) {
         regionFiles.put(regionFile.getRegionPos(), regionFile);
-        for (Chunk chunk : regionFile.getChunks()) {
-            if(chunk != null) chunks.put(chunk.getChunkPos(), chunk);
-        }
-    }
-
-    public Collection<Chunk> getChunks() {
-        return chunks.values();
     }
 
     public Collection<RegionFile> getRegions() {

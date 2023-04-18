@@ -16,6 +16,10 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 public class AmethystSaver {
+    /*
+    * TODO: Chunks are not kept in memory anymore, so we need
+    *  to re-load the map, apply the biome changes on the chunks,
+    *  and then save the map.
     private final String config = ""; // TODO
 
     private final DataOutputStream dataOutputStream;
@@ -139,4 +143,5 @@ public class AmethystSaver {
             }
         }
     }
+     */
 }
