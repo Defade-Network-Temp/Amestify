@@ -2,11 +2,17 @@
 #version 460 core
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in float vextexColor;
-layout(location = 2) in vec2 vertexTexCoords;
-layout(location = 3) in float vertexTexId;
+layout(location = 2) in float vertexBiomeId;
+layout(location = 3) in vec2 vertexTexCoords;
+layout(location = 4) in float vertexTexId;
+layout(std140, binding = 0) buffer BiomeColors {
+    vec4 biomeColors[];
+};
 
 uniform mat4 projectionUniform;
 uniform mat4 viewUniform;
+uniform bool displayBiomeColor;
+uniform float highlightedBiome;
 
 out vec3 fragmentColor;
 out vec2 fragmentTexCoords;
@@ -22,7 +28,14 @@ vec3 unpackColor(float rgb) {
 }
 
 void main() {
-    fragmentColor = unpackColor(vextexColor);
+    if(displayBiomeColor) {
+        fragmentColor = biomeColors[int(vertexBiomeId)].rgb;
+    } else {
+        fragmentColor = unpackColor(vextexColor);
+    }
+
+    if(highlightedBiome == vertexBiomeId) fragmentColor *= vec3(0.5, 0.5, 0.5);
+
     fragmentTexCoords = vertexTexCoords;
     fragmentTexId = vertexTexId;
 

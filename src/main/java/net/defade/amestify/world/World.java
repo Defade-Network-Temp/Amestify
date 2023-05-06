@@ -3,6 +3,7 @@ package net.defade.amestify.world;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.defade.amestify.Main;
+import net.defade.amestify.graphics.BiomeColorLayer;
 import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
@@ -17,11 +18,14 @@ import java.util.Map;
 
 public class World {
     private final Map<Integer, Biome> biomes = new HashMap<>();
+    private final BiomeColorLayer biomeColorLayer = new BiomeColorLayer();
     private final Biome plainsBiome;
 
     private final Map<RegionPos, RegionFile> regionFiles = new HashMap<>();
 
     public World() throws FileNotFoundException {
+        Biome.resetCounter();
+
         InputStream biomesJsonInputStream = Main.class.getClassLoader().getResourceAsStream("biomes.json");
         if(biomesJsonInputStream == null) {
             throw new FileNotFoundException("biomes.json not found");
@@ -109,6 +113,7 @@ public class World {
     }
 
     public void registerBiome(Biome biome) {
+        biomeColorLayer.registerBiome(biome);
         biomes.put(biome.id(), biome);
     }
 
@@ -123,5 +128,15 @@ public class World {
 
     public Collection<RegionFile> getRegions() {
         return regionFiles.values();
+    }
+
+    public Biome getBiomeAt(int x, int z) {
+        RegionFile regionFile = regionFiles.get(new RegionPos(x >> 9, z >> 9));
+        if(regionFile == null) return null;
+        return regionFile.getMapViewerBiome(x & 0x1FF, z & 0x1FF, 0);
+    }
+
+    public BiomeColorLayer getBiomeColorLayer() {
+        return biomeColorLayer;
     }
 }

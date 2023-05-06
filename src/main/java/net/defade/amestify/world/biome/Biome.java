@@ -150,4 +150,8 @@ public final class Biome {
             );
         }
     }
+
+    public static void resetCounter() {
+        ID_COUNTER.set(0);
+    }
 }

@@ -9,15 +9,17 @@ import static org.lwjgl.opengl.GL46.*;
 public class RegionRenderer {
     private static final int POS_SIZE = 2;
     private static final int COLOR_SIZE = 1;
+    private static final int BIOME_ID = 1;
     private static final int TEX_COORDS_SIZE = 2;
     private static final int TEX_ID_SIZE = 1;
 
     private static final int POS_OFFSET = 0;
     private static final int COLOR_OFFSET = POS_OFFSET + POS_SIZE * Float.BYTES;
-    private static final int TEX_COORDS_OFFSET = COLOR_OFFSET + COLOR_SIZE * Float.BYTES;
+    private static final int BIOME_ID_OFFSET = COLOR_OFFSET + COLOR_SIZE * Float.BYTES;
+    private static final int TEX_COORDS_OFFSET = BIOME_ID_OFFSET + BIOME_ID * Float.BYTES;
     private static final int TEX_ID_OFFSET = TEX_COORDS_OFFSET + TEX_COORDS_SIZE * Float.BYTES;
 
-    private static final int VERTEX_SIZE = POS_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
+    private static final int VERTEX_SIZE = POS_SIZE + COLOR_SIZE + BIOME_ID + TEX_COORDS_SIZE + TEX_ID_SIZE;
     private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
     private static final int[] UV_POSITIONS = new int[] {
@@ -74,16 +76,19 @@ public class RegionRenderer {
         glEnableVertexArrayAttrib(vaoID, 1);
         glEnableVertexArrayAttrib(vaoID, 2);
         glEnableVertexArrayAttrib(vaoID, 3);
+        glEnableVertexArrayAttrib(vaoID, 4);
 
         glVertexArrayAttribFormat(vaoID, 0, POS_SIZE, GL_FLOAT, false, POS_OFFSET);
         glVertexArrayAttribFormat(vaoID, 1, COLOR_SIZE, GL_FLOAT, false, COLOR_OFFSET);
-        glVertexArrayAttribFormat(vaoID, 2, TEX_COORDS_SIZE, GL_FLOAT, false, TEX_COORDS_OFFSET);
-        glVertexArrayAttribFormat(vaoID, 3, TEX_ID_SIZE, GL_FLOAT, false, TEX_ID_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 2, BIOME_ID, GL_FLOAT, false, BIOME_ID_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 3, TEX_COORDS_SIZE, GL_FLOAT, false, TEX_COORDS_OFFSET);
+        glVertexArrayAttribFormat(vaoID, 4, TEX_ID_SIZE, GL_FLOAT, false, TEX_ID_OFFSET);
 
         glVertexArrayAttribBinding(vaoID, 0, 0);
         glVertexArrayAttribBinding(vaoID, 1, 0);
         glVertexArrayAttribBinding(vaoID, 2, 0);
         glVertexArrayAttribBinding(vaoID, 3, 0);
+        glVertexArrayAttribBinding(vaoID, 4, 0);
     }
 
     private void updateBuffers() {
@@ -213,11 +218,12 @@ public class RegionRenderer {
             vertices[offset + 1] = yPos + (yAdd * ((relativeEndZ - relativeStartZ) + 1) * 16);
 
             vertices[offset + 2] = rgb;
+            vertices[offset + 3] = biome.id();
 
-            vertices[offset + 3] = UV_POSITIONS[i * 2] * ((relativeEndX - relativeStartX) + 1);
-            vertices[offset + 4] = UV_POSITIONS[i * 2 + 1] * ((relativeEndZ - relativeStartZ) + 1);
+            vertices[offset + 4] = UV_POSITIONS[i * 2] * ((relativeEndX - relativeStartX) + 1);
+            vertices[offset + 5] = UV_POSITIONS[i * 2 + 1] * ((relativeEndZ - relativeStartZ) + 1);
 
-            vertices[offset + 5] = textureLayer;
+            vertices[offset + 6] = textureLayer;
 
             offset += VERTEX_SIZE;
         }

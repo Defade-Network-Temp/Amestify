@@ -130,4 +130,16 @@ public class Shader {
         attach();
         GL46.glUniform1i(varLocation, value);
     }
+
+    public void uploadBoolean(String varName, boolean value) {
+        int varLocation = GL46.glGetUniformLocation(shaderProgramId, varName);
+        attach();
+        GL46.glUniform1i(varLocation, value ? 1 : 0);
+    }
+
+    public void uploadFloat(String varName, float value) {
+        int varLocation = GL46.glGetUniformLocation(shaderProgramId, varName);
+        attach();
+        GL46.glUniform1f(varLocation, value);
+    }
 }

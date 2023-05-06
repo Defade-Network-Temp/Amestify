@@ -14,6 +14,7 @@ import net.defade.amestify.graphics.Window;
 import net.defade.amestify.graphics.gui.GUI;
 import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.world.World;
+import net.defade.amestify.world.biome.Biome;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -128,12 +129,15 @@ public class ViewerGUI extends GUI {
         Assets.CHUNK_SHADER.attach();
         Assets.CHUNK_SHADER.uploadMat4f("projectionUniform", camera.getProjectionMatrix());
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
-        uploadHighlightedBlock();
+        Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", biomeSelectorWindow.shouldShowBiomeLayer());
+        uploadHighlightedBlockAndBiome();
 
         Assets.BLOCK_SHEET.bind();
+        if(world != null) world.getBiomeColorLayer().bind();
 
         renderRegions();
 
+        if(world != null) world.getBiomeColorLayer().unbind();
         Assets.BLOCK_SHEET.unbind();
         Assets.CHUNK_SHADER.detach();
 
@@ -211,13 +215,17 @@ public class ViewerGUI extends GUI {
         }
     }
 
-    private void uploadHighlightedBlock() {
+    private void uploadHighlightedBlockAndBiome() {
+        if(world == null) return;
         // gl_FragCoord is in screen space, so we need to convert it to viewport space
 
         Vector2f start = worldCoordsToViewport(new Vector2f((float) (Math.floor(getViewportOrthoX() / 16) * 16), (float) (Math.floor(getViewportOrthoY() / 16) * 16)));
         Vector2f end = worldCoordsToViewport(new Vector2f((float) Math.floor(getViewportOrthoX() / 16) * 16 + 16, (float) Math.floor(getViewportOrthoY() / 16) * 16 + 16));
 
         Assets.CHUNK_SHADER.uploadVec4f("highlightedBlock", start.x, start.y, end.x, end.y);
+
+        Biome highlightedBiome = world.getBiomeAt((int) (getViewportOrthoX() / 16), (int) (getViewportOrthoY() / 16));
+        Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
     }
 
     private Vector2f worldCoordsToViewport(Vector2f worldCoords) {

@@ -27,4 +27,22 @@ public class Utils {
         Files.deleteIfExists(filePath);
         return Files.createFile(filePath);
     }
+
+    public static int floatToRGB(float[] rgb) {
+        if(rgb.length != 3) throw new IllegalArgumentException("RGB array must have a length of 3");
+
+        return floatToRGB(rgb[0], rgb[1], rgb[2]);
+    }
+
+    public static int floatToRGB(float r, float g, float b) {
+        return (int) (r * 255) << 16 | (int) (g * 255) << 8 | (int) (b * 255);
+    }
+
+    public static float[] rgbToFloat(int rgb) {
+        return rgbToFloat((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    public static float[] rgbToFloat(int red, int green, int blue) {
+        return new float[] {red / 255f, green / 255f, blue / 255f};
+    }
 }
