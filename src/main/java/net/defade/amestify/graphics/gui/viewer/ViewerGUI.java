@@ -113,13 +113,19 @@ public class ViewerGUI extends GUI {
     private void renderMap(float deltaTime) {
         ImGui.begin("Map", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
-        ImVec2 windowSize = getLargestSizeForViewport();
+        ImVec2 windowSize = new ImVec2();
+        ImGui.getContentRegionAvail(windowSize);
         ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
 
         ImGui.setCursorPos(windowPos.x, windowPos.y);
 
         viewportPos.set(getViewPortPos());
         viewportSize.set(windowSize);
+
+        float x = ((16 * 40) * windowSize.x) / framebuffer.getWidth();
+        float y = ((16 * 21) * windowSize.y) / framebuffer.getHeight();
+        camera.getProjectionSize().set(x, y);
+        camera.adjustProjection();
 
         updateControllers(deltaTime);
         framebuffer.bind();
@@ -355,23 +361,6 @@ public class ViewerGUI extends GUI {
             ImGui.text(s);
         }
         ImGui.endTooltip();
-    }
-
-    private static ImVec2 getLargestSizeForViewport() {
-        ImVec2 windowSize = new ImVec2();
-        ImGui.getContentRegionAvail(windowSize);
-        windowSize.x -= ImGui.getScrollX();
-        windowSize.y -= ImGui.getScrollY();
-
-        float aspectWidth = windowSize.x;
-        float aspectHeight = aspectWidth / Window.getTargetAspectRatio();
-
-        if(aspectHeight > windowSize.y) {
-            aspectHeight = windowSize.y;
-            aspectWidth = aspectHeight * Window.getTargetAspectRatio();
-        }
-
-        return new ImVec2(aspectWidth, aspectHeight);
     }
 
     private static ImVec2 getCenteredPositionForViewport(ImVec2 aspectSize) {
