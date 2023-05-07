@@ -61,6 +61,7 @@ public class ViewerGUI extends GUI {
 
         biomeCreatorWindow.render();
         biomeSelectorWindow.render();
+        renderTooltipInfo();
 
         renderMap(deltaTime);
 
@@ -319,6 +320,41 @@ public class ViewerGUI extends GUI {
 
         glDrawArraysInstanced(GL_LINES, 0, 2, xLines + yLines);
         Assets.GRID_SHADER.detach();
+    }
+
+    private void renderTooltipInfo() {
+        int regionX = (int) Math.floor(getViewportOrthoX() / 512);
+        int regionZ = (int) Math.floor(getViewportOrthoY() / 512);
+        int x = (int) Math.floor(getViewportOrthoX() / 16);
+        int z = (int) Math.floor(getViewportOrthoY() / 16);
+
+        Biome selectedBiome = world == null ? null : world.getBiomeAt(x, z);
+        String[] tooltipText = new String[] {
+                x + ", " + z,
+                "Biome: " + (selectedBiome == null ? "None" : selectedBiome.name().asString()),
+                "Region: r" + regionX + "." + regionZ + ".mca"
+        };
+
+        int tooltipSizeX = 0;
+        for (String text : tooltipText) {
+            float size = ImGui.calcTextSize(text).x;
+            if(size > tooltipSizeX) {
+                tooltipSizeX = (int) size;
+            }
+        }
+
+        tooltipSizeX += (ImGui.getStyle().getWindowPaddingX() * 2);
+
+        if(tooltipSizeX < 225) tooltipSizeX = 225; // Put a minimum size that is big enough
+        // so the tooltip doesn't constantly resize
+
+        ImGui.setNextWindowSize(tooltipSizeX, 0);
+        ImGui.setNextWindowPos(viewportPos.x + viewportSize.x - tooltipSizeX - (ImGui.getStyle().getWindowPaddingX()), viewportPos.y + ImGui.getStyle().getWindowPaddingY());
+        ImGui.beginTooltip();
+        for (String s : tooltipText) {
+            ImGui.text(s);
+        }
+        ImGui.endTooltip();
     }
 
     private static ImVec2 getLargestSizeForViewport() {
