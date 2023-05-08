@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.gui.map;
+package net.defade.amestify.graphics.gui.renderer;
 
 import net.defade.amestify.graphics.texture.block.BlockTexture;
 import net.defade.amestify.loaders.anvil.RegionFile;
@@ -31,7 +31,7 @@ public class RegionRenderer {
 
     private final RegionFile regionFile;
     private int squares = 0;
-    private float[] vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
+    private float[] vertices;
 
     private int vaoID, vboID, eboID;
 
@@ -40,13 +40,6 @@ public class RegionRenderer {
 
     public RegionRenderer(RegionFile regionFile) {
         this.regionFile = regionFile;
-        for (int layer = RegionFile.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
-            generateMeshForLayer(layer);
-        }
-
-        float[] vertices = new float[squares * 4 * VERTEX_SIZE];
-        System.arraycopy(this.vertices, 0, vertices, 0, vertices.length);
-        this.vertices = vertices;
     }
 
     public void updateMesh() {
@@ -196,8 +189,6 @@ public class RegionRenderer {
             color = biome.effects().foliageColor();
         }
 
-        float rgb = color ^ 0xFF000000; // Remove the alpha channel
-
         int xPos = relativeStartX * 16;
         int yPos = relativeStartZ * 16;
 
@@ -217,7 +208,7 @@ public class RegionRenderer {
             vertices[offset] = xPos + (xAdd * ((relativeEndX - relativeStartX) + 1) * 16);
             vertices[offset + 1] = yPos + (yAdd * ((relativeEndZ - relativeStartZ) + 1) * 16);
 
-            vertices[offset + 2] = rgb;
+            vertices[offset + 2] = Float.intBitsToFloat(color);
             vertices[offset + 3] = biome.id();
 
             vertices[offset + 4] = UV_POSITIONS[i * 2] * ((relativeEndX - relativeStartX) + 1);

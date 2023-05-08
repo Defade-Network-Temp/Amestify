@@ -12,12 +12,13 @@ import net.defade.amestify.graphics.Camera;
 import net.defade.amestify.graphics.Framebuffer;
 import net.defade.amestify.graphics.Window;
 import net.defade.amestify.graphics.gui.GUI;
+import net.defade.amestify.graphics.gui.renderer.ShapeRenderer;
 import net.defade.amestify.loaders.anvil.RegionFile;
 import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
-import org.joml.Vector3f;
+import org.joml.Vector2i;
 import org.joml.Vector4f;
 import java.lang.Math;
 
@@ -25,21 +26,21 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
 public class ViewerGUI extends GUI {
-    private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
-    private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
-    private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
-    private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
-    private boolean isViewDisabled = false;
-
     private final Framebuffer framebuffer = new Framebuffer(1920, 1080);
+    private final ShapeRenderer shapeRenderer = new ShapeRenderer();
 
     private final ImVec2 viewportPos = new ImVec2();
     private final ImVec2 viewportSize = new ImVec2();
     private final Camera camera = new Camera();
     private Vector2f clickOrigin = null;
-    private float resetCameraLerpTime = -1;
-    private float cameraLerpZoom = -1;
-    private Vector2f cameraLerpOrigin = null;
+    private final Vector2i hoveredBlock = new Vector2i(0, 0);
+
+    private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
+    private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
+    private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
+    private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
+
+    private boolean isViewDisabled = false;
 
     private World world;
 
@@ -113,19 +114,7 @@ public class ViewerGUI extends GUI {
     private void renderMap(float deltaTime) {
         ImGui.begin("Map", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
-        ImVec2 windowSize = new ImVec2();
-        ImGui.getContentRegionAvail(windowSize);
-        ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
-
-        ImGui.setCursorPos(windowPos.x, windowPos.y);
-
-        viewportPos.set(getViewPortPos());
-        viewportSize.set(windowSize);
-
-        float x = ((16 * 40) * windowSize.x) / framebuffer.getWidth();
-        float y = ((16 * 21) * windowSize.y) / framebuffer.getHeight();
-        camera.getProjectionSize().set(x, y);
-        camera.adjustProjection();
+        adjustProjectionSize();
 
         updateControllers(deltaTime);
         framebuffer.bind();
@@ -137,7 +126,7 @@ public class ViewerGUI extends GUI {
         Assets.CHUNK_SHADER.uploadMat4f("projectionUniform", camera.getProjectionMatrix());
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
         Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", biomeSelectorWindow.shouldShowBiomeLayer());
-        uploadHighlightedBlockAndBiome();
+        uploadHighlightedElements();
 
         Assets.BLOCK_SHEET.bind();
         if(world != null) world.getBiomeColorLayer().bind();
@@ -148,28 +137,35 @@ public class ViewerGUI extends GUI {
         Assets.BLOCK_SHEET.unbind();
         Assets.CHUNK_SHADER.detach();
 
+        shapeRenderer.render(camera);
+
         renderGrid();
 
         framebuffer.unbind();
 
-        ImGui.image(framebuffer.getTextureId(), windowSize.x, windowSize.y, 0, 1, 1, 0);
+        ImGui.image(framebuffer.getTextureId(), viewportSize.x, viewportSize.y, 0, 1, 1, 0);
         ImGui.end();
     }
 
+    private void adjustProjectionSize() {
+        ImVec2 windowSize = new ImVec2();
+        ImGui.getContentRegionAvail(windowSize);
+        ImVec2 windowPos = getCenteredPositionForViewport(windowSize);
+
+        ImGui.setCursorPos(windowPos.x, windowPos.y);
+
+        viewportPos.set(getViewPortPos());
+        viewportSize.set(windowSize);
+
+        float newProjectionX = ((16 * 40) * windowSize.x) / framebuffer.getWidth();
+        float newProjectionY = ((16 * 21) * windowSize.y) / framebuffer.getHeight();
+        camera.getProjectionSize().set(newProjectionX, newProjectionY);
+        camera.adjustProjection();
+    }
+
     private void updateControllers(float deltaTime) {
-        if(resetCameraLerpTime >= 0) {
-            resetCameraLerpTime = clamp(resetCameraLerpTime + (deltaTime * 2), 0, 1);
-            camera.setZoom(lerp(cameraLerpZoom, 1, resetCameraLerpTime));
-            camera.adjustProjection();
-
-            float x = lerp(cameraLerpOrigin.x, 0, resetCameraLerpTime);
-            float y = lerp(cameraLerpOrigin.y, 0, resetCameraLerpTime);
-            camera.getPosition().set(x, y);
-        }
-
-        if(resetCameraLerpTime == 1) {
-            resetCameraLerpTime = -1;
-        }
+        camera.update(deltaTime);
+        hoveredBlock.set((int) Math.floor(getViewportOrthoX() / 16), (int) Math.floor(getViewportOrthoY() / 16));
 
         if(isViewDisabled) return;
 
@@ -201,9 +197,7 @@ public class ViewerGUI extends GUI {
             }
 
             if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE)) { // TODO: Change to key
-                resetCameraLerpTime = 0;
-                cameraLerpZoom = camera.getZoom();
-                cameraLerpOrigin = new Vector2f(camera.getPosition());
+                camera.reset();
             }
         }
 
@@ -222,32 +216,13 @@ public class ViewerGUI extends GUI {
         }
     }
 
-    private void uploadHighlightedBlockAndBiome() {
-        if(world == null) return;
-        // gl_FragCoord is in screen space, so we need to convert it to viewport space
+    private void uploadHighlightedElements() {
+        if(world != null && isMouseInViewport()) {
+            Biome highlightedBiome = world.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
+            Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
+        }
 
-        Vector2f start = worldCoordsToViewport(new Vector2f((float) (Math.floor(getViewportOrthoX() / 16) * 16), (float) (Math.floor(getViewportOrthoY() / 16) * 16)));
-        Vector2f end = worldCoordsToViewport(new Vector2f((float) Math.floor(getViewportOrthoX() / 16) * 16 + 16, (float) Math.floor(getViewportOrthoY() / 16) * 16 + 16));
-
-        Assets.CHUNK_SHADER.uploadVec4f("highlightedBlock", start.x, start.y, end.x, end.y);
-
-        Biome highlightedBiome = world.getBiomeAt((int) (getViewportOrthoX() / 16), (int) (getViewportOrthoY() / 16));
-        Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
-    }
-
-    private Vector2f worldCoordsToViewport(Vector2f worldCoords) {
-        Matrix4f projectionMatrix = new Matrix4f(camera.getProjectionMatrix());
-        Matrix4f viewMatrix = new Matrix4f(camera.getViewMatrix());
-
-        Vector4f clipSpacePos = projectionMatrix.mul(viewMatrix).transform(new Vector4f(worldCoords.x, worldCoords.y, 0, 1));
-        Vector3f ndcSpacePos = new Vector3f(
-                clipSpacePos.x / clipSpacePos.w,
-                clipSpacePos.y / clipSpacePos.w,
-                clipSpacePos.z / clipSpacePos.w
-        );
-
-        return new Vector2f((ndcSpacePos.x + 1.0f) / 2.0f * framebuffer.getWidth(),
-                (ndcSpacePos.y + 1.0f) / 2.0f * framebuffer.getHeight());
+        shapeRenderer.addSquare(hoveredBlock.x, hoveredBlock.y, hoveredBlock.x + 1, hoveredBlock.y + 1, 0xAA282828);
     }
 
     private void renderRegions() {
@@ -329,16 +304,14 @@ public class ViewerGUI extends GUI {
     }
 
     private void renderTooltipInfo() {
-        int regionX = (int) Math.floor(getViewportOrthoX() / 512);
-        int regionZ = (int) Math.floor(getViewportOrthoY() / 512);
-        int x = (int) Math.floor(getViewportOrthoX() / 16);
-        int z = (int) Math.floor(getViewportOrthoY() / 16);
+        int regionX = (int) Math.floor(hoveredBlock.x / 512f);
+        int regionZ = (int) Math.floor(hoveredBlock.y / 512f);
 
-        Biome selectedBiome = world == null ? null : world.getBiomeAt(x, z);
+        Biome selectedBiome = world == null ? null : world.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
         String[] tooltipText = new String[] {
-                x + ", " + z,
+                hoveredBlock.x + ", " + hoveredBlock.y,
                 "Biome: " + (selectedBiome == null ? "None" : selectedBiome.name().asString()),
-                "Region: r" + regionX + "." + regionZ + ".mca"
+                "Region: r." + regionX + "." + regionZ + ".mca"
         };
 
         int tooltipSizeX = 0;
@@ -357,8 +330,8 @@ public class ViewerGUI extends GUI {
         ImGui.setNextWindowSize(tooltipSizeX, 0);
         ImGui.setNextWindowPos(viewportPos.x + viewportSize.x - tooltipSizeX - (ImGui.getStyle().getWindowPaddingX()), viewportPos.y + ImGui.getStyle().getWindowPaddingY());
         ImGui.beginTooltip();
-        for (String s : tooltipText) {
-            ImGui.text(s);
+        for (String text : tooltipText) {
+            ImGui.text(text);
         }
         ImGui.endTooltip();
     }
@@ -382,13 +355,5 @@ public class ViewerGUI extends GUI {
         topLeft.y -= ImGui.getScrollY();
 
         return topLeft;
-    }
-
-    private static float lerp(float start, float end, float t) {
-        return start + t * (end - start);
-    }
-
-    public static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
     }
 }

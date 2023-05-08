@@ -19,6 +19,7 @@ public class Assets {
 
     public static Shader CHUNK_SHADER;
     public static Shader GRID_SHADER;
+    public static Shader SHAPE_SHADER;
 
     public static void init() throws IOException {
         Block.init();
@@ -32,6 +33,9 @@ public class Assets {
 
         GRID_SHADER = new Shader("grid-shader.glsl");
         GRID_SHADER.init();
+
+        SHAPE_SHADER = new Shader("shape-shader.glsl");
+        SHAPE_SHADER.init();
     }
 
     // Java can't list files inside the JAR, so we copy them to a temp folder.

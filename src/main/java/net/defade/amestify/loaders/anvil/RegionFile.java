@@ -1,7 +1,7 @@
 package net.defade.amestify.loaders.anvil;
 
 import net.defade.amestify.graphics.Assets;
-import net.defade.amestify.graphics.gui.map.RegionRenderer;
+import net.defade.amestify.graphics.gui.renderer.RegionRenderer;
 import net.defade.amestify.graphics.texture.block.BlockTexture;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.World;
@@ -107,7 +107,7 @@ public class RegionFile {
                 for (int z = 0; z < 128; z++) {
                     int arrayIndex = (((x << 7) + z));
                     if(updatedBiomes[arrayIndex] == biome) {
-                        updatedBiomes[arrayIndex] = world.getPlainsBiome()  ;
+                        updatedBiomes[arrayIndex] = world.getPlainsBiome();
                     }
 
                     arrayIndex = (arrayIndex * TEXTURES_DEPTH);

@@ -18,20 +18,19 @@ out vec3 fragmentColor;
 out vec2 fragmentTexCoords;
 out float fragmentTexId;
 
-vec3 unpackColor(float rgb) {
-    vec3 color;
-    color.r = floor(rgb / 256.0 / 256.0);
-    color.g = floor((rgb - color.r * 256.0 * 256.0) / 256.0);
-    color.b = floor(rgb - color.r * 256.0 * 256.0 - color.g * 256.0);
-
-    return color / 255.0;
+vec3 decodeRGB(float rgb) {
+    int intBits = floatBitsToInt(rgb);
+    int r = (intBits >> 16) & 0xFF;
+    int g = (intBits >> 8) & 0xFF;
+    int b = intBits & 0xFF;
+    return vec3(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0);
 }
 
 void main() {
     if(displayBiomeColor) {
         fragmentColor = biomeColors[int(vertexBiomeId)].rgb;
     } else {
-        fragmentColor = unpackColor(vextexColor);
+        fragmentColor = decodeRGB(vextexColor);
     }
 
     if(highlightedBiome == vertexBiomeId) fragmentColor *= vec3(0.5, 0.5, 0.5);
@@ -50,15 +49,10 @@ in vec2 fragmentTexCoords;
 in float fragmentTexId;
 
 uniform sampler2DArray textureSampler;
-uniform vec4 highlightedBlock;
 
 out vec4 color;
 
 void main() {
     color = texture(textureSampler, vec3(fragmentTexCoords, int(fragmentTexId)));
     color.rgb *= fragmentColor;
-
-    if(gl_FragCoord.x > highlightedBlock.x && gl_FragCoord.x < highlightedBlock.z && gl_FragCoord.y > highlightedBlock.y && gl_FragCoord.y < highlightedBlock.w) {
-        color.rgb *= vec3(0.5, 0.5, 0.5);
-    }
 }

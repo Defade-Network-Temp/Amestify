@@ -14,6 +14,9 @@ public class Camera {
     private final Vector2f projectionSize = new Vector2f(16 * 40, 16 * 21);
 
     private float zoom = 1.0f;
+    private float resetLerpTime = -1;
+    private float zoomLerp = -1;
+    private Vector2f lerpOrigin = null;
 
     public Camera() {
         this.projectionMatrix = new Matrix4f();
@@ -21,6 +24,28 @@ public class Camera {
         this.inverseProjection = new Matrix4f();
         this.inverseView = new Matrix4f();
         adjustProjection();
+    }
+
+    public void update(float deltaTime) {
+        if(resetLerpTime >= 0) {
+            resetLerpTime = clamp(resetLerpTime + (deltaTime * 2), 0, 1);
+            setZoom(lerp(zoomLerp, 1, resetLerpTime));
+            adjustProjection();
+
+            float x = lerp(lerpOrigin.x, 0, resetLerpTime);
+            float y = lerp(lerpOrigin.y, 0, resetLerpTime);
+            getPosition().set(x, y);
+        }
+
+        if(resetLerpTime == 1) {
+            resetLerpTime = -1;
+        }
+    }
+
+    public void reset() {
+        resetLerpTime = 0;
+        zoomLerp = zoom;
+        lerpOrigin = new Vector2f(position);
     }
 
     public void adjustProjection() {
@@ -71,5 +96,13 @@ public class Camera {
 
     public void addZoom(float value) {
         this.zoom = Math.min(zoom + value, MAX_ZOOM);
+    }
+
+    private static float lerp(float start, float end, float t) {
+        return start + t * (end - start);
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
 }
