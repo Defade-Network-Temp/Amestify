@@ -1,8 +1,7 @@
-package net.defade.amestify.loaders;
+package net.defade.amestify.world.savers;
 
 import com.github.luben.zstd.ZstdOutputStream;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeParser;
 import net.defade.amestify.world.chunk.Chunk;

@@ -1,7 +1,7 @@
 package net.defade.amestify.graphics.gui.renderer;
 
 import net.defade.amestify.graphics.texture.block.BlockTexture;
-import net.defade.amestify.loaders.anvil.RegionFile;
+import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
 import net.defade.amestify.world.biome.Biome;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -29,7 +29,7 @@ public class RegionRenderer {
             0, 1
     };
 
-    private final RegionFile regionFile;
+    private final MapViewerRegion mapViewerRegion;
     private int squares = 0;
     private float[] vertices;
 
@@ -38,15 +38,15 @@ public class RegionRenderer {
     private boolean buffersInitialized = false;
     private boolean isDirty = false;
 
-    public RegionRenderer(RegionFile regionFile) {
-        this.regionFile = regionFile;
+    public RegionRenderer(MapViewerRegion mapViewerRegion) {
+        this.mapViewerRegion = mapViewerRegion;
     }
 
     public void updateMesh() {
         this.vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
         squares = 0;
 
-        for (int layer = RegionFile.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
+        for (int layer = MapViewerRegion.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
             generateMeshForLayer(layer);
         }
 
@@ -165,18 +165,18 @@ public class RegionRenderer {
     }
 
     private BlockTexture getTextureLayer(int x, int z, int layer) {
-        return regionFile.getMapViewerTextureLayer(x, z, layer);
+        return mapViewerRegion.getMapViewerTextureLayer(x, z, layer);
     }
 
     private Biome getBiome(int x, int z, int layer) {
-        return regionFile.getMapViewerBiome(x, z, layer);
+        return mapViewerRegion.getMapViewerBiome(x, z, layer);
     }
 
     private void addBlockAtRelativePos(int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
-        relativeStartX = regionFile.getRegionPos().x() * 512 + relativeStartX;
-        relativeStartZ = regionFile.getRegionPos().z() * 512 + relativeStartZ;
-        relativeEndX = regionFile.getRegionPos().x() * 512 + relativeEndX;
-        relativeEndZ = regionFile.getRegionPos().z() * 512 + relativeEndZ;
+        relativeStartX = mapViewerRegion.getRegionPos().x() * 512 + relativeStartX;
+        relativeStartZ = mapViewerRegion.getRegionPos().z() * 512 + relativeStartZ;
+        relativeEndX = mapViewerRegion.getRegionPos().x() * 512 + relativeEndX;
+        relativeEndZ = mapViewerRegion.getRegionPos().z() * 512 + relativeEndZ;
 
         int textureLayer = blockTexture.textureLayer();
 

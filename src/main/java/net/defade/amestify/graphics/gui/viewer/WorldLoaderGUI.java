@@ -4,9 +4,8 @@ import imgui.ImGui;
 import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
-import net.defade.amestify.loaders.anvil.AnvilMapLoader;
-import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.World;
+import net.defade.amestify.world.AnvilToViewerRegionConverter;
+import net.defade.amestify.world.MapViewerWorld;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -15,21 +14,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 public class WorldLoaderGUI {
     private Path worldPath = null;
-    private final ProgressTracker progressTracker = new ProgressTracker();
-
-    private CompletableFuture<World> worldFuture = null;
-    private Throwable worldFutureException = null;
+    private final AnvilToViewerRegionConverter anvilToViewerRegionConverter = new AnvilToViewerRegionConverter();
 
     public void renderImGui() {
-        if(worldFuture == null) {
+        if(anvilToViewerRegionConverter.getMapViewerWorldFuture() == null || anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
             renderSelectWorldDialog();
         } else {
-            if(!worldFuture.isDone()) {
+            if(!anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone()) {
                 renderWorldLoadingDialog();
             }
         }
@@ -62,19 +57,13 @@ public class WorldLoaderGUI {
         if(isPathValid()) {
             centerNextItem("Load");
             if(ImGui.button("Load")) {
-                worldFuture = new AnvilMapLoader(worldPath, -64, 320).loadWorld(progressTracker);
-                worldFuture.whenComplete((world, throwable) -> {
-                    if(throwable != null) {
-                        worldFutureException = throwable;
-                        worldFuture = null;
-                    }
-                });
+                anvilToViewerRegionConverter.convert(worldPath);
             }
         }
 
-        if(worldFutureException != null) {
+        if(anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
             ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
-            ImGui.textWrapped(worldFutureException.getMessage());
+            ImGui.textWrapped(anvilToViewerRegionConverter.getMapViewerWorldFuture().handle((mapViewerWorld, throwable) -> throwable.getMessage()).join());
             ImGui.popStyleColor();
         }
 
@@ -115,9 +104,9 @@ public class WorldLoaderGUI {
         ImGui.setNextWindowSize(600, 100);
         ImGui.begin("Loading world...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        String text = "Loaded " + progressTracker.getCurrent() + " out of " +
-                progressTracker.getTotal() + " chunks (" +
-                (int) (progressTracker.getProgress() * 100) + "%)";
+        String text = "Loaded " + anvilToViewerRegionConverter.getProgressTracker().getCurrent() + " out of " +
+                anvilToViewerRegionConverter.getProgressTracker().getTotal() + " chunks (" +
+                (int) (anvilToViewerRegionConverter.getProgressTracker().getProgress() * 100) + "%)";
         float windowWidth = ImGui.getWindowSizeX();
         float windowHeight = ImGui.getWindowSizeY();
         float width = 600;
@@ -125,7 +114,7 @@ public class WorldLoaderGUI {
         ImGui.setCursorPosX((windowWidth - width) / 2);
         ImGui.setCursorPosY((windowHeight - height) / 2);
 
-        ImGui.progressBar(progressTracker.getProgress(), width, height, "");
+        ImGui.progressBar(anvilToViewerRegionConverter.getProgressTracker().getProgress(), width, height, "");
         ImGui.sameLine(
                 (windowWidth - width) / 2 // Set text start at the start of the progress bar
                         + (width / 2)  // Set text start at the middle of the progress bar
@@ -147,15 +136,15 @@ public class WorldLoaderGUI {
     }
 
     public boolean isDone() {
-        return worldFuture != null && worldFuture.isDone() && !worldFuture.isCompletedExceptionally();
+        return anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone() &&
+                !anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally();
     }
 
-    public World getWorld() {
-        return worldFuture.join();
+    public MapViewerWorld getWorld() {
+        return anvilToViewerRegionConverter.getMapViewerWorldFuture().join();
     }
 
     public void reset() {
-        worldFuture = null;
-        worldFutureException = null;
+        anvilToViewerRegionConverter.reset();
     }
 }

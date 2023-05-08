@@ -2,7 +2,7 @@ package net.defade.amestify.world.chunk;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.defade.amestify.world.Block;
-import net.defade.amestify.world.World;
+import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.chunk.pos.ChunkPos;
 import net.defade.amestify.world.palette.AdaptivePalette;
@@ -25,7 +25,7 @@ import java.util.Objects;
 public class Chunk {
     public static final int CHUNK_SECTION_SIZE = 16;
 
-    private final World world;
+    private final MapViewerWorld mapViewerWorld;
 
     private final ChunkPos chunkPos;
     private final int minY;
@@ -34,8 +34,8 @@ public class Chunk {
     private final List<Section> sections = new ArrayList<>();
     private int[] heightMap = new int[256];
 
-    public Chunk(World world, ChunkPos chunkPos, int minY, int maxY, CompressionType compressionType, InputStream inputStream) throws IOException {
-        this.world = world;
+    public Chunk(MapViewerWorld mapViewerWorld, ChunkPos chunkPos, int minY, int maxY, CompressionType compressionType, InputStream inputStream) throws IOException {
+        this.mapViewerWorld = mapViewerWorld;
         this.chunkPos = chunkPos;
 
         this.minY = minY;
@@ -83,7 +83,7 @@ public class Chunk {
     }
 
     public Biome getBiome(int x, int y, int z) {
-        return world.getBiomeById(getSection(y >> 4).getBiomePalette().get((x & 0xF) / 4, (y & 0xF) / 4, (z & 0xF) / 4));
+        return mapViewerWorld.getBiomeById(getSection(y >> 4).getBiomePalette().get((x & 0xF) / 4, (y & 0xF) / 4, (z & 0xF) / 4));
     }
 
     public int getHighestBlockAt(int x, int z) {
@@ -152,7 +152,7 @@ public class Chunk {
     private int getBiomeId(String biomeId) {
         if(biomeId == null) return 0;
 
-        return Objects.requireNonNullElse(world.getMinecraftBiomeByName(biomeId), world.getPlainsBiome()).id();
+        return Objects.requireNonNullElse(mapViewerWorld.getMinecraftBiomeByName(biomeId), mapViewerWorld.getPlainsBiome()).id();
     }
 
     private Palette readBiomeNBTPalette(AdaptivePalette adaptivePalette, CompoundTag paletteNBT) {

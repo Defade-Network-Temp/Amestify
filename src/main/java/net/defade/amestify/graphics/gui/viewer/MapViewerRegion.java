@@ -1,26 +1,18 @@
-package net.defade.amestify.loaders.anvil;
+package net.defade.amestify.graphics.gui.viewer;
 
 import net.defade.amestify.graphics.Assets;
 import net.defade.amestify.graphics.gui.renderer.RegionRenderer;
 import net.defade.amestify.graphics.texture.block.BlockTexture;
-import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.World;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.chunk.Chunk;
-import net.defade.amestify.world.chunk.pos.ChunkPos;
 import net.defade.amestify.world.chunk.pos.RegionPos;
-import net.querz.mca.CompressionType;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.nio.file.Path;
+import net.defade.amestify.world.loaders.RegionFile;
 
-public class RegionFile {
+public class MapViewerRegion {
     public static final int TEXTURES_DEPTH = 3;
 
-    private final World world;
     private final RegionPos regionPos;
+    private final Biome plainsBiome;
 
     private final int minY;
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
@@ -29,46 +21,20 @@ public class RegionFile {
 
     private final RegionRenderer regionRenderer = new RegionRenderer(this);
 
-    public RegionFile(ProgressTracker progressTracker, World world, Path regionFilePath, RegionPos regionPos, int minY, int maxY) throws IOException {
-        this.world = world;
-        this.regionPos = regionPos;
-        this.minY = minY;
+    public MapViewerRegion(RegionFile regionFile, Biome plainsBiome) {
+        this.plainsBiome = plainsBiome;
+        this.regionPos = regionFile.getRegionPos();
+        this.minY = regionFile.getMinY();
 
-        RandomAccessFile regionFile = new RandomAccessFile(regionFilePath.toFile(), "r");
-
-        for (int i = 0; i < 1024; i++) {
-            regionFile.seek(i * 4);
-
-            int offset = regionFile.read() << 16;
-            offset |= (regionFile.read() & 0xFF) << 8;
-            offset |= regionFile.read() & 0xFF;
-
-            if (regionFile.readByte() == 0) {
-                if(progressTracker != null) progressTracker.increment();
-                continue;
+        for (int x = 0; x < 32; x++) {
+            for (int z = 0; z < 32; z++) {
+                Chunk chunk = regionFile.getChunk(x, z);
+                if(!chunk.isEmpty()) {
+                    calculateTexturesForChunk(chunk);
+                }
             }
-
-            regionFile.seek(4096L * offset + 4); // +4: skip data size
-
-            byte compressionScheme = regionFile.readByte();
-            InputStream chunkInputStream = new FileInputStream(regionFile.getFD());
-            CompressionType compressionType = CompressionType.getFromID(compressionScheme);
-
-            Chunk chunk = new Chunk(
-                    world,
-                    getChunkPosFromIndex(i).add(regionPos.x() * 32, regionPos.z() * 32),
-                    minY, maxY, // TODO minY and maxY
-                    compressionType, chunkInputStream
-            );
-            if(progressTracker != null) progressTracker.increment();
-            if(chunk.isEmpty()) {
-                continue;
-            }
-
-            calculateTexturesForChunk(chunk);
         }
 
-        regionFile.close();
         regionRenderer.updateMesh();
     }
 
@@ -99,7 +65,7 @@ public class RegionFile {
             for (int z = 0; z < 128; z++) {
                 int arrayIndex = (((x << 7) + z));
                 if(updatedBiomes[arrayIndex] == biome) {
-                    updatedBiomes[arrayIndex] = world.getPlainsBiome();
+                    updatedBiomes[arrayIndex] = plainsBiome;
                 }
 
                 arrayIndex = (arrayIndex * TEXTURES_DEPTH);
@@ -107,7 +73,7 @@ public class RegionFile {
                     Biome currentBiome = biomes[arrayIndex + layer];
                     if(currentBiome == null) break;
                     if(currentBiome == biome) {
-                        biomes[arrayIndex + layer] = world.getPlainsBiome();
+                        biomes[arrayIndex + layer] = plainsBiome;
                     }
                 }
             }
@@ -155,13 +121,5 @@ public class RegionFile {
                 }
             }
         }
-    }
-
-    public static int getChunkIndex(int x, int z) {
-        return (x & 0x1F) + ((z & 0x1F) << 5);
-    }
-
-    public static ChunkPos getChunkPosFromIndex(int index) {
-        return new ChunkPos(index & 0x1f, index >> 5);
     }
 }

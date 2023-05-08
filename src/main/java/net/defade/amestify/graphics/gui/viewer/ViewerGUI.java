@@ -13,8 +13,7 @@ import net.defade.amestify.graphics.Framebuffer;
 import net.defade.amestify.graphics.Window;
 import net.defade.amestify.graphics.gui.GUI;
 import net.defade.amestify.graphics.gui.renderer.ShapeRenderer;
-import net.defade.amestify.loaders.anvil.RegionFile;
-import net.defade.amestify.world.World;
+import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -44,7 +43,7 @@ public class ViewerGUI extends GUI {
 
     private boolean isViewDisabled = false;
 
-    private World world;
+    private MapViewerWorld mapViewerWorld;
 
     @Override
     public void renderImgui(float deltaTime) {
@@ -58,7 +57,7 @@ public class ViewerGUI extends GUI {
             worldLoaderGUI.renderImGui();
             disableView();
         } else {
-            if(world == null) {
+            if(mapViewerWorld == null) {
                 setWorld(worldLoaderGUI.getWorld());
             }
         }
@@ -79,10 +78,10 @@ public class ViewerGUI extends GUI {
         return true;
     }
 
-    private void setWorld(World world) {
-        this.world = world;
-        biomeCreatorWindow.setWorld(world);
-        biomeSelectorWindow.setWorld(world);
+    private void setWorld(MapViewerWorld mapViewerWorld) {
+        this.mapViewerWorld = mapViewerWorld;
+        biomeCreatorWindow.setWorld(mapViewerWorld);
+        biomeSelectorWindow.setWorld(mapViewerWorld);
     }
 
     private void setupDockspace() {
@@ -109,7 +108,7 @@ public class ViewerGUI extends GUI {
                     worldLoaderGUI.reset();
                     biomeSelectorWindow.reset();
                     biomeCreatorWindow.reset();
-                    world = null;
+                    mapViewerWorld = null;
                 }
                 ImGui.endMenu();
             }
@@ -159,11 +158,11 @@ public class ViewerGUI extends GUI {
         uploadHighlightedElements();
 
         Assets.BLOCK_SHEET.bind();
-        if(world != null) world.getBiomeColorLayer().bind();
+        if(mapViewerWorld != null) mapViewerWorld.getBiomeColorLayer().bind();
 
         renderRegions();
 
-        if(world != null) world.getBiomeColorLayer().unbind();
+        if(mapViewerWorld != null) mapViewerWorld.getBiomeColorLayer().unbind();
         Assets.BLOCK_SHEET.unbind();
         Assets.CHUNK_SHADER.detach();
 
@@ -261,8 +260,8 @@ public class ViewerGUI extends GUI {
             int maxRegionZ = (int) Math.floor((double) maxZ / 512);
             for (int regionX = minRegionX; regionX <= maxRegionX; regionX++) {
                 for (int regionZ = minRegionZ; regionZ <= maxRegionZ; regionZ++) {
-                    RegionFile regionFile = world.getRegion(regionX, regionZ);
-                    if(regionFile == null) continue;
+                    MapViewerRegion mapViewerRegion = mapViewerWorld.getRegion(regionX, regionZ);
+                    if(mapViewerRegion == null) continue;
 
                     int minRegionBlockX = Math.max(minX, regionX * 512);
                     int maxRegionBlockX = Math.min(maxX, regionX * 512 + 511);
@@ -271,11 +270,11 @@ public class ViewerGUI extends GUI {
 
                     for (int x = minRegionBlockX; x <= maxRegionBlockX; x++) {
                         for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z++) {
-                            regionFile.setBiome(x, z, biomeSelectorWindow.getSelectedBiome());
+                            mapViewerRegion.setBiome(x, z, biomeSelectorWindow.getSelectedBiome());
                         }
                     }
 
-                    regionFile.getRenderer().updateMesh();
+                    mapViewerRegion.getRenderer().updateMesh();
                 }
             }
 
@@ -284,8 +283,8 @@ public class ViewerGUI extends GUI {
     }
 
     private void uploadHighlightedElements() {
-        if(world != null && isMouseInViewport()) {
-            Biome highlightedBiome = world.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
+        if(mapViewerWorld != null && isMouseInViewport()) {
+            Biome highlightedBiome = mapViewerWorld.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
             Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
         }
 
@@ -297,14 +296,14 @@ public class ViewerGUI extends GUI {
     }
 
     private void renderRegions() {
-        if(world == null) return;
+        if(mapViewerWorld == null) return;
 
         int minSeenRegionX = (int) Math.floor(camera.getPosition().x / 16 / 16 / 32);
         int maxSeenRegionX = (int) Math.floor((camera.getPosition().x + camera.getProjectionSize().x * camera.getZoom()) / 16 / 16 / 32);
         int minSeenRegionZ = (int) Math.floor(camera.getPosition().y / 16 / 16 / 32);
         int maxSeenRegionZ = (int) Math.floor((camera.getPosition().y + camera.getProjectionSize().y * camera.getZoom()) / 16 / 16 / 32);
 
-        for (RegionFile region : world.getRegions()) {
+        for (MapViewerRegion region : mapViewerWorld.getRegions()) {
             if(region.getRegionPos().x() >= minSeenRegionX && region.getRegionPos().x() <= maxSeenRegionX && region.getRegionPos().z() >= minSeenRegionZ && region.getRegionPos().z() <= maxSeenRegionZ) {
                 region.getRenderer().render();
             }
@@ -378,7 +377,7 @@ public class ViewerGUI extends GUI {
         int regionX = (int) Math.floor(hoveredBlock.x / 512f);
         int regionZ = (int) Math.floor(hoveredBlock.y / 512f);
 
-        Biome selectedBiome = world == null ? null : world.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
+        Biome selectedBiome = mapViewerWorld == null ? null : mapViewerWorld.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
         String[] tooltipText = new String[] {
                 hoveredBlock.x + ", " + hoveredBlock.y,
                 "Biome: " + (selectedBiome == null ? "None" : selectedBiome.name().asString()),

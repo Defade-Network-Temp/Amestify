@@ -5,12 +5,12 @@ import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiColorEditFlags;
 import imgui.type.ImBoolean;
 import net.defade.amestify.utils.Utils;
-import net.defade.amestify.world.World;
+import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import java.util.Comparator;
 
 public class BiomeSelectorWindow {
-    private World world = null;
+    private MapViewerWorld mapViewerWorld = null;
     private Biome selectedBiome = null;
     private final ImBoolean showBiomeLayer = new ImBoolean(false);
     private final float[] biomeMapViewerColor = new float[3];
@@ -25,9 +25,9 @@ public class BiomeSelectorWindow {
         ImGui.end();
     }
 
-    public void setWorld(World world) {
-        this.world = world;
-        this.selectedBiome = world.getPlainsBiome();
+    public void setWorld(MapViewerWorld mapViewerWorld) {
+        this.mapViewerWorld = mapViewerWorld;
+        this.selectedBiome = mapViewerWorld.getPlainsBiome();
     }
 
     public boolean shouldShowBiomeLayer() {
@@ -39,7 +39,7 @@ public class BiomeSelectorWindow {
     }
 
     public void reset() {
-        world = null;
+        mapViewerWorld = null;
         selectedBiome = null;
     }
 
@@ -69,7 +69,7 @@ public class BiomeSelectorWindow {
                 ImGui.colorPicker3("#Biome Map Color Viewer Picker", biomeMapViewerColor, ImGuiColorEditFlags.NoLabel | ImGuiColorEditFlags.NoAlpha);
 
                 if (ImGui.button("Apply")) {
-                    world.getBiomeColorLayer().setBiomeColor(biome, Utils.floatToRGB(biomeMapViewerColor));
+                    mapViewerWorld.getBiomeColorLayer().setBiomeColor(biome, Utils.floatToRGB(biomeMapViewerColor));
                     ImGui.closeCurrentPopup();
                 }
 
@@ -77,18 +77,18 @@ public class BiomeSelectorWindow {
             }
 
             ImGui.sameLine();
-            ImGui.colorButton("##" + biome, Utils.rgbToFloat(world.getBiomeColorLayer().getColor(biome)), 0, 16, 16);
+            ImGui.colorButton("##" + biome, Utils.rgbToFloat(mapViewerWorld.getBiomeColorLayer().getColor(biome)), 0, 16, 16);
         }
     }
 
     private void renderDeleteBiome() {
-        boolean canDeleteBiome = selectedBiome != null && selectedBiome != world.getPlainsBiome();
+        boolean canDeleteBiome = selectedBiome != null && selectedBiome != mapViewerWorld.getPlainsBiome();
         if(!canDeleteBiome) ImGui.beginDisabled();
         ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
 
         if(ImGui.button("Delete Biome")) {
-            world.unregisterBiome(selectedBiome);
-            selectedBiome = world.getPlainsBiome();
+            mapViewerWorld.unregisterBiome(selectedBiome);
+            selectedBiome = mapViewerWorld.getPlainsBiome();
         }
 
         ImGui.popStyleColor();
@@ -96,16 +96,16 @@ public class BiomeSelectorWindow {
     }
 
     private Biome[] getVanillaBiomes() {
-        if(world == null) return new Biome[0];
-        return world.unmodifiableBiomeCollection().stream()
+        if(mapViewerWorld == null) return new Biome[0];
+        return mapViewerWorld.unmodifiableBiomeCollection().stream()
                 .filter(biome -> biome.name().asString().contains("minecraft:"))
                 .sorted(Comparator.comparing(biome -> biome.name().asString()))
                 .toArray(Biome[]::new);
     }
 
     private Biome[] getCreatedBiomes() {
-        if(world == null) return new Biome[0];
-        return world.unmodifiableBiomeCollection().stream()
+        if(mapViewerWorld == null) return new Biome[0];
+        return mapViewerWorld.unmodifiableBiomeCollection().stream()
                 .filter(biome -> !biome.name().asString().contains("minecraft:"))
                 .sorted(Comparator.comparing(biome -> biome.name().asString()))
                 .toArray(Biome[]::new);

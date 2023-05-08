@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.defade.amestify.Main;
 import net.defade.amestify.graphics.BiomeColorLayer;
-import net.defade.amestify.loaders.anvil.RegionFile;
+import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
@@ -16,14 +16,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class World {
+public class MapViewerWorld {
     private final Map<Integer, Biome> biomes = new HashMap<>();
     private final BiomeColorLayer biomeColorLayer = new BiomeColorLayer();
     private final Biome plainsBiome;
 
-    private final Map<RegionPos, RegionFile> regionFiles = new HashMap<>();
+    private final Map<RegionPos, MapViewerRegion> regionFiles = new HashMap<>();
 
-    public World() throws FileNotFoundException {
+    public MapViewerWorld() throws FileNotFoundException {
         Biome.resetCounter();
 
         InputStream biomesJsonInputStream = Main.class.getClassLoader().getResourceAsStream("biomes.json");
@@ -119,25 +119,25 @@ public class World {
 
     public void unregisterBiome(Biome biome) {
         biomes.remove(biome.id());
-        getRegions().forEach(regionFile -> regionFile.unregisterBiome(biome));
+        getRegions().forEach(mapViewerRegion -> mapViewerRegion.unregisterBiome(biome));
     }
 
-    public void addRegion(RegionFile regionFile) {
-        regionFiles.put(regionFile.getRegionPos(), regionFile);
+    public void addRegion(MapViewerRegion mapViewerRegion) {
+        regionFiles.put(mapViewerRegion.getRegionPos(), mapViewerRegion);
     }
 
-    public RegionFile getRegion(int regionX, int regionZ) {
+    public MapViewerRegion getRegion(int regionX, int regionZ) {
         return regionFiles.get(new RegionPos(regionX, regionZ));
     }
 
-    public Collection<RegionFile> getRegions() {
+    public Collection<MapViewerRegion> getRegions() {
         return regionFiles.values();
     }
 
     public Biome getBiomeAt(int x, int z) {
-        RegionFile regionFile = regionFiles.get(new RegionPos(x >> 9, z >> 9));
-        if(regionFile == null) return null;
-        return regionFile.getMapViewerBiome(x & 0x1FF, z & 0x1FF, 0);
+        MapViewerRegion mapViewerRegion = regionFiles.get(new RegionPos(x >> 9, z >> 9));
+        if(mapViewerRegion == null) return null;
+        return mapViewerRegion.getMapViewerBiome(x & 0x1FF, z & 0x1FF, 0);
     }
 
     public BiomeColorLayer getBiomeColorLayer() {
