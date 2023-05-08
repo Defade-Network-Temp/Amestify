@@ -153,4 +153,9 @@ public class WorldLoaderGUI {
     public World getWorld() {
         return worldFuture.join();
     }
+
+    public void reset() {
+        worldFuture = null;
+        worldFutureException = null;
+    }
 }

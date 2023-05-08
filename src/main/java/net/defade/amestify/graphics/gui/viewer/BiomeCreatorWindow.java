@@ -31,6 +31,10 @@ public class BiomeCreatorWindow {
         this.world = world;
     }
 
+    public void reset() {
+        world = null;
+    }
+
     private void renderBiomeSave() {
         ImGui.inputTextWithHint("##Biome Name", "Biome Name", biomeName);
         ImGui.sameLine();

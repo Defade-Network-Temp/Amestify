@@ -49,6 +49,7 @@ public class ViewerGUI extends GUI {
     @Override
     public void renderImgui(float deltaTime) {
         setupDockspace();
+        renderMenuBar();
 
         if(!databaseConnectorGUI.isConnected()) {
             databaseConnectorGUI.renderImGui();
@@ -99,6 +100,33 @@ public class ViewerGUI extends GUI {
         ImGui.popStyleVar(2);
 
         ImGui.dockSpace(ImGui.getID("DockSpace"));
+    }
+
+    private void renderMenuBar() {
+        if(ImGui.beginMenuBar()) {
+            if(ImGui.beginMenu("File")) {
+                if(ImGui.menuItem("Open world")) {
+                    worldLoaderGUI.reset();
+                    biomeSelectorWindow.reset();
+                    biomeCreatorWindow.reset();
+                    world = null;
+                }
+                ImGui.endMenu();
+            }
+
+            if(ImGui.beginMenu("Save")) {
+                if(ImGui.menuItem("Save to amethyst file")) {
+                    // TODO
+                }
+
+                if(ImGui.menuItem("Save to database")) {
+                    // TODO
+                }
+                ImGui.endMenu();
+            }
+
+            ImGui.endMenuBar();
+        }
     }
 
     private void enableView() {
