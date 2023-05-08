@@ -35,6 +35,8 @@ public class ViewerGUI extends GUI {
     private Vector2f clickOrigin = null;
     private final Vector2i hoveredBlock = new Vector2i(0, 0);
 
+    private Vector2i selectedRegionOrigin = null;
+
     private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
     private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
     private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
@@ -214,6 +216,43 @@ public class ViewerGUI extends GUI {
         } else {
             clickOrigin = null;
         }
+
+        if(MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+            if(selectedRegionOrigin == null && isMouseInViewport()) {
+                selectedRegionOrigin = new Vector2i(hoveredBlock);
+            }
+        } else if (selectedRegionOrigin != null) {
+            int minX = Math.min(selectedRegionOrigin.x, hoveredBlock.x);
+            int maxX = Math.max(selectedRegionOrigin.x, hoveredBlock.x);
+            int minZ = Math.min(selectedRegionOrigin.y, hoveredBlock.y);
+            int maxZ = Math.max(selectedRegionOrigin.y, hoveredBlock.y);
+
+            int minRegionX = (int) Math.floor((double) minX / 512);
+            int maxRegionX = (int) Math.floor((double) maxX / 512);
+            int minRegionZ = (int) Math.floor((double) minZ / 512);
+            int maxRegionZ = (int) Math.floor((double) maxZ / 512);
+            for (int regionX = minRegionX; regionX <= maxRegionX; regionX++) {
+                for (int regionZ = minRegionZ; regionZ <= maxRegionZ; regionZ++) {
+                    RegionFile regionFile = world.getRegion(regionX, regionZ);
+                    if(regionFile == null) continue;
+
+                    int minRegionBlockX = Math.max(minX, regionX * 512);
+                    int maxRegionBlockX = Math.min(maxX, regionX * 512 + 511);
+                    int minRegionBlockZ = Math.max(minZ, regionZ * 512);
+                    int maxRegionBlockZ = Math.min(maxZ, regionZ * 512 + 511);
+
+                    for (int x = minRegionBlockX; x <= maxRegionBlockX; x++) {
+                        for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z++) {
+                            regionFile.setBiome(x, z, biomeSelectorWindow.getSelectedBiome());
+                        }
+                    }
+
+                    regionFile.getRenderer().updateMesh();
+                }
+            }
+
+            selectedRegionOrigin = null;
+        }
     }
 
     private void uploadHighlightedElements() {
@@ -223,6 +262,10 @@ public class ViewerGUI extends GUI {
         }
 
         shapeRenderer.addSquare(hoveredBlock.x, hoveredBlock.y, hoveredBlock.x + 1, hoveredBlock.y + 1, 0xAA282828);
+
+        if(selectedRegionOrigin != null) {
+            shapeRenderer.addSquare(selectedRegionOrigin.x, selectedRegionOrigin.y, hoveredBlock.x + 1, hoveredBlock.y, 0x99C46200);
+        }
     }
 
     private void renderRegions() {

@@ -126,6 +126,10 @@ public class World {
         regionFiles.put(regionFile.getRegionPos(), regionFile);
     }
 
+    public RegionFile getRegion(int regionX, int regionZ) {
+        return regionFiles.get(new RegionPos(regionX, regionZ));
+    }
+
     public Collection<RegionFile> getRegions() {
         return regionFiles.values();
     }

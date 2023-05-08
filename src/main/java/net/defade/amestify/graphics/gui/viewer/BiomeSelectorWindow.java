@@ -34,6 +34,10 @@ public class BiomeSelectorWindow {
         return showBiomeLayer.get();
     }
 
+    public Biome getSelectedBiome() {
+        return selectedBiome;
+    }
+
     private void renderBiomeList() {
         boolean shouldEndList = ImGui.beginListBox("##Biomes", ImGui.getContentRegionAvailX(), ImGui.getContentRegionAvailY() - 46);
 

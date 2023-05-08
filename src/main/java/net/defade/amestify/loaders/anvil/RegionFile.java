@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
 
 public class RegionFile {
     public static final int TEXTURES_DEPTH = 3;
@@ -28,8 +26,6 @@ public class RegionFile {
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
     private final Biome[] biomes = new Biome[128 * 128 * TEXTURES_DEPTH]; // Biomes in minecraft are stored in 4x4 blocks
     private final Biome[] updatedBiomes = new Biome[128 * 128]; // Biomes that have been updated. A null value means that the biome has not been updated so the original biome should be saved.
-
-    private final Set<Integer> usedBiomes = new HashSet<>();
 
     private final RegionRenderer regionRenderer = new RegionRenderer(this);
 
@@ -89,9 +85,7 @@ public class RegionFile {
     }
 
     public void setBiome(int x, int z, Biome biome) {
-        usedBiomes.add(biome.id());
-
-        int arrayIndex = ((((x / 4) << 7) + (z / 4)));
+        int arrayIndex = (((((x & 0x1FF) >> 2) << 7) + ((z & 0x1FF) >> 2)));
         for (int layer = 0; layer < TEXTURES_DEPTH; layer++) {
             if(biomes[(arrayIndex * TEXTURES_DEPTH) + layer] == null) break;
             biomes[(arrayIndex * TEXTURES_DEPTH) + layer] = biome;
@@ -101,26 +95,25 @@ public class RegionFile {
     }
 
     public void unregisterBiome(Biome biome) {
-        if(usedBiomes.contains(biome.id())) {
-            usedBiomes.remove(biome.id());
-            for (int x = 0; x < 128; x++) {
-                for (int z = 0; z < 128; z++) {
-                    int arrayIndex = (((x << 7) + z));
-                    if(updatedBiomes[arrayIndex] == biome) {
-                        updatedBiomes[arrayIndex] = world.getPlainsBiome();
-                    }
+        for (int x = 0; x < 128; x++) {
+            for (int z = 0; z < 128; z++) {
+                int arrayIndex = (((x << 7) + z));
+                if(updatedBiomes[arrayIndex] == biome) {
+                    updatedBiomes[arrayIndex] = world.getPlainsBiome();
+                }
 
-                    arrayIndex = (arrayIndex * TEXTURES_DEPTH);
-                    for (int layer = 0; layer < TEXTURES_DEPTH; layer++) {
-                        if(biomes[arrayIndex + layer] == biome) {
-                            biomes[arrayIndex + layer] = world.getPlainsBiome();
-                        }
+                arrayIndex = (arrayIndex * TEXTURES_DEPTH);
+                for (int layer = 0; layer < TEXTURES_DEPTH; layer++) {
+                    Biome currentBiome = biomes[arrayIndex + layer];
+                    if(currentBiome == null) break;
+                    if(currentBiome == biome) {
+                        biomes[arrayIndex + layer] = world.getPlainsBiome();
                     }
                 }
             }
-
-            regionRenderer.updateMesh();
         }
+
+        regionRenderer.updateMesh();
     }
 
     public RegionRenderer getRenderer() {
@@ -154,7 +147,6 @@ public class RegionFile {
 
                     Biome biome = chunk.getBiome(x, y, z);
                     biomes[((((normalizedX / 4) << 7) + (normalizedZ / 4)) * TEXTURES_DEPTH) + layer] = biome;
-                    usedBiomes.add(biome.id());
 
                     if(!texture.isTranslucent()) break;
                     layer++;
