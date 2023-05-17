@@ -16,7 +16,7 @@ public class AnvilToViewerRegionConverter {
     public void convert(Path worldPath) {
         this.mapViewerWorldFuture = new CompletableFuture<>();
         try {
-            this.mapViewerWorld = new MapViewerWorld();
+            this.mapViewerWorld = new MapViewerWorld(worldPath);
         } catch (FileNotFoundException exception) {
             mapViewerWorldFuture.completeExceptionally(exception);
             return;

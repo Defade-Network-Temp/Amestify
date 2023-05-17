@@ -49,7 +49,7 @@ public class AnvilMapLoader {
             try {
                 List<Path> regionFiles = getRegionFiles();
                 final int chunksToLoad = regionFiles.size() * 1024;
-                progressTracker.reset(chunksToLoad);
+                if(progressTracker != null) progressTracker.reset(chunksToLoad);
 
                 List<CompletableFuture<AnvilRegionFile>> loadingFutures = new ArrayList<>();
 

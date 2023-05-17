@@ -1,78 +1,140 @@
 package net.defade.amestify.world.savers;
 
-import com.github.luben.zstd.ZstdOutputStream;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
+import net.defade.amestify.utils.ProgressTracker;
+import net.defade.amestify.utils.Utils;
+import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeParser;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.Section;
+import net.defade.amestify.world.loaders.RegionFile;
+import net.defade.amestify.world.loaders.anvil.AnvilMapLoader;
 import net.defade.amestify.world.palette.AdaptivePalette;
 import net.defade.amestify.world.palette.FlexiblePalette;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class AmethystSaver {
-    /*
-    * TODO: Chunks are not kept in memory anymore, so we need
-    *  to re-load the map, apply the biome changes on the chunks,
-    *  and then save the map.
-    private final String config = ""; // TODO
+    private final ReentrantLock fileLock = new ReentrantLock();
+    private Path tempFile;
+    private RandomAccessFile outputFile;
 
-    private final DataOutputStream dataOutputStream;
-    private final World world;
+    private MapViewerWorld mapViewerWorld;
 
-    public AmethystSaver(OutputStream outputStream, World world) throws IOException {
-        this.dataOutputStream = new DataOutputStream(new ZstdOutputStream(outputStream));
-        this.world = world;
-    }
+    private final AtomicInteger totalChunks = new AtomicInteger(0);
+    private long chunksAmountSaveOffset;
 
-    public CompletableFuture<Void> save() {
-        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+    public CompletableFuture<Path> saveToTempFile(String worldName, String config, MapViewerWorld mapViewerWorld, ProgressTracker progressTracker) {
+        if(tempFile != null) throw new IllegalStateException("Already saving a world.");
 
-        CompletableFuture.runAsync(() -> {
-            final Collection<Biome> biomes = world.unmodifiableBiomeCollection();
-            final Collection<Chunk> chunks = world.getChunks();
+        CompletableFuture<Path> saveFuture = new CompletableFuture<>();
+
+        this.totalChunks.set(0);
+        this.mapViewerWorld = mapViewerWorld;
+        progressTracker.reset(mapViewerWorld.getRegions().size() * 32 * 32);
+
+        try {
+            this.tempFile = Utils.createAmethystTempFile(worldName);
+            this.outputFile = new RandomAccessFile(tempFile.toFile(), "rw");
+
+            writeFileHeader(config);
+        } catch (IOException exception) {
+            saveFuture.completeExceptionally(exception);
+        }
+
+        AnvilMapLoader anvilMapLoader = new AnvilMapLoader(mapViewerWorld.getAnvilWorldPath(), -64, 320); // TODO
+        anvilMapLoader.loadRegions(null, mapViewerWorld, regionFile -> {
+            try {
+                writeRegion(regionFile, progressTracker);
+            } catch (IOException exception) {
+                saveFuture.completeExceptionally(exception);
+            }
+        }).whenComplete((unused, throwable) -> {
+            if (throwable != null) {
+                saveFuture.completeExceptionally(throwable);
+                return;
+            }
 
             try {
-                dataOutputStream.writeUTF(config);
-                dataOutputStream.writeInt(biomes.size());
-
-                for (Biome biome : biomes) {
-                    dataOutputStream.writeInt(biome.id());
-                    byte[] encodedBiome = BiomeParser.encode(biome);
-                    dataOutputStream.writeInt(encodedBiome.length);
-                    dataOutputStream.write(encodedBiome);
-                }
-
-                dataOutputStream.writeInt(chunks.size());
-
-                int totalConvertedChunks = 0;
-
-                for (Chunk chunk : chunks) {
-                    byte[] serializedChunk = encodeChunk(chunk);
-
-                    dataOutputStream.writeLong(chunk.getChunkPos().getChunkIndex());
-                    dataOutputStream.writeInt(serializedChunk.length);
-                    dataOutputStream.write(serializedChunk);
-                }
-
-                dataOutputStream.flush();
-                dataOutputStream.close();
-
-                completableFuture.complete(null);
-            } catch (Exception exception) {
-                completableFuture.completeExceptionally(exception);
+                outputFile.seek(chunksAmountSaveOffset);
+                outputFile.writeInt(totalChunks.get());
+                outputFile.close();
+            } catch (IOException exception) {
+                saveFuture.completeExceptionally(exception);
+                return;
             }
+
+            saveFuture.complete(tempFile);
+            tempFile = null;
         });
 
-        return completableFuture;
+        return saveFuture;
+    }
+
+    private void writeFileHeader(String config) throws IOException {
+        System.out.println("Config: " + config);
+        Collection<Biome> biomes = mapViewerWorld.unmodifiableBiomeCollection();
+
+        outputFile.writeUTF(config);
+        outputFile.writeInt(biomes.size());
+
+        for (Biome biome : biomes) {
+            outputFile.writeInt(biome.id());
+            byte[] encodedBiome = BiomeParser.encode(biome);
+            outputFile.writeInt(encodedBiome.length);
+            outputFile.write(encodedBiome);
+        }
+
+        chunksAmountSaveOffset = outputFile.getFilePointer();
+        outputFile.writeInt(0); // We don't know the amount of chunks yet, so we'll write 0 for now.
+    }
+
+    private void writeRegion(RegionFile regionFile, ProgressTracker progressTracker) throws IOException {
+        for (int x = 0; x < 32; x++) {
+            for (int z = 0; z < 32; z++) {
+                Chunk chunk = regionFile.getChunk(x, z);
+                if(chunk.isEmpty()) {
+                    progressTracker.increment();
+                    continue;
+                }
+
+                byte[] serializedChunk = encodeChunk(chunk);
+
+                fileLock.lock();
+                outputFile.writeLong(chunk.getChunkPos().getChunkIndex());
+                outputFile.writeInt(serializedChunk.length);
+                outputFile.write(serializedChunk);
+                fileLock.unlock();
+
+                progressTracker.increment();
+            }
+        }
     }
 
     private byte[] encodeChunk(Chunk chunk) throws IOException {
         int arraySize = Byte.BYTES + 64; // Pre-calculating the array size allows us to define the original byte array size, avoiding useless and costly resizes.
+
+        MapViewerRegion viewerRegionContainingChunk = mapViewerWorld.getRegion(chunk.getChunkPos().x() >> 5, chunk.getChunkPos().z() >> 5);
+        for (int x = 0; x < 16; x += 4) {
+            for (int z = 0; z < 16; z += 4) {
+                Biome modifiedBiome = viewerRegionContainingChunk.getModifiedBiome(chunk.getChunkPos().x() * 16 + x, chunk.getChunkPos().z() * 16 + z);
+                if(modifiedBiome != null) {
+                    for (int y = -64; y < 320; y += 4) {
+                        chunk.setBiome(x, y, z, modifiedBiome);
+                    }
+                }
+            }
+        }
+
         for (int i = 0; i < chunk.getSections().size(); i++) {
             Section section = chunk.getSections().get(i);
             AdaptivePalette blockPalette = section.getBlockPalette();
@@ -114,6 +176,7 @@ public class AmethystSaver {
         }
 
         dataOutputStream.writeInt(0); //TODO: Save block entities
+        totalChunks.getAndIncrement();
 
         return byteArrayOutputStream.toByteArray();
     }
@@ -142,5 +205,4 @@ public class AmethystSaver {
             }
         }
     }
-     */
 }

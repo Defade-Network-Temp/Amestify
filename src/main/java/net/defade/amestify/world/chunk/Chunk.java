@@ -86,6 +86,10 @@ public class Chunk {
         return mapViewerWorld.getBiomeById(getSection(y >> 4).getBiomePalette().get((x & 0xF) / 4, (y & 0xF) / 4, (z & 0xF) / 4));
     }
 
+    public void setBiome(int x, int y, int z, Biome biome) {
+        getSection(y >> 4).getBiomePalette().set((x & 0xF) / 4, (y & 0xF) / 4, (z & 0xF) / 4, biome.id());
+    }
+
     public int getHighestBlockAt(int x, int z) {
         return heightMap[(x & 0xF) + ((z & 0xF) << 4)] + minY -1;
     }

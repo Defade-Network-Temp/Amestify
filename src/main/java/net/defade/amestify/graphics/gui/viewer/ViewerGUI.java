@@ -38,6 +38,7 @@ public class ViewerGUI extends GUI {
 
     private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
     private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
+    private final AmethystSaveFileGUI amethystSaveFileGUI = new AmethystSaveFileGUI();
     private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
     private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
 
@@ -55,6 +56,9 @@ public class ViewerGUI extends GUI {
             disableView();
         } else if(!worldLoaderGUI.isDone()){
             worldLoaderGUI.renderImGui();
+            disableView();
+        } else if(!amethystSaveFileGUI.isDone()) {
+            amethystSaveFileGUI.renderImGui();
             disableView();
         } else {
             if(mapViewerWorld == null) {
@@ -82,6 +86,7 @@ public class ViewerGUI extends GUI {
         this.mapViewerWorld = mapViewerWorld;
         biomeCreatorWindow.setWorld(mapViewerWorld);
         biomeSelectorWindow.setWorld(mapViewerWorld);
+        amethystSaveFileGUI.setWorld(mapViewerWorld);
     }
 
     private void setupDockspace() {
@@ -115,7 +120,7 @@ public class ViewerGUI extends GUI {
 
             if(ImGui.beginMenu("Save")) {
                 if(ImGui.menuItem("Save to amethyst file")) {
-                    // TODO
+                    amethystSaveFileGUI.reset();
                 }
 
                 if(ImGui.menuItem("Save to database")) {

@@ -12,18 +12,21 @@ import net.defade.amestify.world.chunk.pos.RegionPos;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MapViewerWorld {
+    private final Path anvilWorldPath;
     private final Map<Integer, Biome> biomes = new HashMap<>();
     private final BiomeColorLayer biomeColorLayer = new BiomeColorLayer();
     private final Biome plainsBiome;
 
     private final Map<RegionPos, MapViewerRegion> regionFiles = new HashMap<>();
 
-    public MapViewerWorld() throws FileNotFoundException {
+    public MapViewerWorld(Path anvilWorldPath) throws FileNotFoundException {
+        this.anvilWorldPath = anvilWorldPath;
         Biome.resetCounter();
 
         InputStream biomesJsonInputStream = Main.class.getClassLoader().getResourceAsStream("biomes.json");
@@ -78,6 +81,10 @@ public class MapViewerWorld {
         }
 
         plainsBiome = plains;
+    }
+
+    public Path getAnvilWorldPath() {
+        return anvilWorldPath;
     }
 
     public Biome getPlainsBiome() {

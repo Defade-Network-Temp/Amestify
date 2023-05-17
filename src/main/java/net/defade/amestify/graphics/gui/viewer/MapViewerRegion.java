@@ -50,6 +50,10 @@ public class MapViewerRegion {
         return biomes[((((x / 4) << 7) + (z / 4)) * TEXTURES_DEPTH) + layer];
     }
 
+    public Biome getModifiedBiome(int x, int z) {
+        return updatedBiomes[(((x >> 2) << 7) + (z >> 2))];
+    }
+
     public void setBiome(int x, int z, Biome biome) {
         int arrayIndex = (((((x & 0x1FF) >> 2) << 7) + ((z & 0x1FF) >> 2)));
         for (int layer = 0; layer < TEXTURES_DEPTH; layer++) {
