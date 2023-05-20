@@ -1,6 +1,5 @@
 package net.defade.amestify.graphics.gui;
 
-import imgui.ImFont;
 import imgui.ImFontAtlas;
 import imgui.ImFontConfig;
 import imgui.ImGui;
@@ -16,7 +15,7 @@ import imgui.gl3.ImGuiImplGl3;
 import java.io.IOException;
 import java.io.InputStream;
 import net.defade.amestify.control.MouseListener;
-import net.defade.amestify.graphics.Window;
+import net.defade.amestify.graphics.rendering.Window;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -26,7 +25,6 @@ public class ImGUILayer {
 
     // LWJGL3 renderer (SHOULD be initialized)
     private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
-    public static ImFont imFont;
 
     // Initialize Dear ImGui.
     public void initImGui() {
@@ -177,7 +175,7 @@ public class ImGUILayer {
             throw new RuntimeException(exception);
         }
 
-        imFont = fontAtlas.addFontFromMemoryTTF(font, 16, fontConfig);
+        fontAtlas.addFontFromMemoryTTF(font, 16, fontConfig);
         fontConfig.destroy(); // After all fonts were added we don't need this config more
 
         // ------------------------------------------------------------
@@ -191,18 +189,14 @@ public class ImGUILayer {
         imGuiGl3.init("#version 330 core");
     }
 
-    public void update(float deltaTime) {
-        GUI gui = Window.getGUI();
+    public void render(float deltaTime) {
+        startFrame(deltaTime);
 
-        if(gui.usesImGui()) {
-            startFrame(deltaTime);
+        ImGui.newFrame();
+        Window.getViewerWindow().render(deltaTime);
+        ImGui.render();
 
-            ImGui.newFrame();
-            gui.renderImgui(deltaTime);
-            ImGui.render();
-
-            endFrame();
-        }
+        endFrame();
 
         MouseListener.endFrame();
     }

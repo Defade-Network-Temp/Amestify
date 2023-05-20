@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.texture.block.generator;
+package net.defade.amestify.graphics.rendering.texture.block.generator;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -28,9 +28,9 @@ public class BlockTextureMap {
 
         JsonObject jsonObject = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
                 .fromJson(new InputStreamReader(blockTexturesJsonInputStream), JsonObject.class);
-        JsonObject placeholdersObject = jsonObject.getAsJsonObject("placeholders");
+        JsonObject placeHoldersObject = jsonObject.getAsJsonObject("placeholders");
 
-        for (Map.Entry<String, JsonElement> placeholderEntry : placeholdersObject.entrySet()) {
+        for (Map.Entry<String, JsonElement> placeholderEntry : placeHoldersObject.entrySet()) {
             placeholders.put(placeholderEntry.getKey(), placeholderEntry.getValue().getAsJsonArray().asList()
                     .stream().map(JsonElement::getAsString).toList());
         }

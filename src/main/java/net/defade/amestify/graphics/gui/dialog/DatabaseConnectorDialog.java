@@ -1,25 +1,31 @@
-package net.defade.amestify.graphics.gui.viewer;
+package net.defade.amestify.graphics.gui.dialog;
 
 import imgui.ImGui;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
-import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.graphics.gui.Viewer;
 import java.util.concurrent.CompletableFuture;
 
-public class DatabaseConnectorGUI {
+public class DatabaseConnectorDialog extends Dialog {
+    private final Viewer viewer;
+
     private final ImString host = new ImString("localhost", 253); // A DNS name can be 253 characters long max
     private final ImString port = new ImString("27017", 5); // A port can be 5 characters long max
     private final ImString username = new ImString();
     private final ImString password = new ImString();
     private final ImString database = new ImString();
 
-    private final MongoConnector mongoConnector = new MongoConnector();
     private CompletableFuture<Void> connectFuture = null;
     private Throwable throwable = null;
 
-    public void renderImGui() {
+    public DatabaseConnectorDialog(Viewer viewer) {
+        this.viewer = viewer;
+    }
+
+    @Override
+    public void render() {
         ImGui.setNextWindowSize(400, 200);
         ImGui.begin("Connect to database", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
@@ -30,7 +36,7 @@ public class DatabaseConnectorGUI {
         ImGui.inputTextWithHint("##Database", "Database", database);
 
         if((connectFuture == null || connectFuture.isDone()) && ImGui.button("Connect")) {
-            connectFuture = mongoConnector.connect(host.get(), Integer.parseInt(port.get()), username.get(), password.get().toCharArray(), database.get());
+            connectFuture = viewer.getMongoConnector().connect(host.get(), Integer.parseInt(port.get()), username.get(), password.get().toCharArray(), database.get());
             connectFuture.exceptionally(throwable -> {
                 this.throwable = throwable;
                 return null;
@@ -48,6 +54,15 @@ public class DatabaseConnectorGUI {
         }
 
         ImGui.end();
+
+        if(isConnected()) disable();
+    }
+
+    @Override
+    protected void reset() {
+        viewer.getMongoConnector().disconnect();
+        connectFuture = null;
+        throwable = null;
     }
 
     public boolean isConnected() {

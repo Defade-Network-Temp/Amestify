@@ -3,8 +3,7 @@ package net.defade.amestify.world;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.defade.amestify.Main;
-import net.defade.amestify.graphics.BiomeColorLayer;
-import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
+import net.defade.amestify.graphics.rendering.BiomeColorLayer;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
@@ -91,19 +90,9 @@ public class MapViewerWorld {
         return plainsBiome;
     }
 
-    public Biome getBiomeByName(NamespaceID from) {
+    public Biome getBiomeByName(String name) {
         for (Biome biome : unmodifiableBiomeCollection()) {
-            if(biome.name().path().equals(from.path())) {
-                return biome;
-            }
-        }
-
-        return null;
-    }
-
-    public Biome getMinecraftBiomeByName(String from) {
-        for (Biome biome : unmodifiableBiomeCollection()) {
-            if(biome.name().asString().equals(from)) {
+            if(biome.name().asString().equals(name)) {
                 return biome;
             }
         }

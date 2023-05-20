@@ -1,21 +1,26 @@
-package net.defade.amestify.graphics.gui.viewer;
+package net.defade.amestify.graphics.gui.window;
 
 import imgui.ImGui;
 import imgui.flag.ImGuiColorEditFlags;
 import imgui.type.ImString;
+import net.defade.amestify.graphics.gui.Viewer;
 import net.defade.amestify.utils.NamespaceID;
-import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
 
 import java.awt.Color;
 
-public class BiomeCreatorWindow {
-    private MapViewerWorld mapViewerWorld = null;
+public class BiomeCreatorUI implements UIComponent {
+    private final Viewer viewer;
 
     private final float[] pickerColor = new float[3];
     private final ImString biomeName = new ImString();
 
+    public BiomeCreatorUI(Viewer viewer) {
+        this.viewer = viewer;
+    }
+
+    @Override
     public void render() {
         ImGui.begin("Biome Creator");
 
@@ -27,18 +32,10 @@ public class BiomeCreatorWindow {
         ImGui.end();
     }
 
-    public void setWorld(MapViewerWorld mapViewerWorld) {
-        this.mapViewerWorld = mapViewerWorld;
-    }
-
-    public void reset() {
-        mapViewerWorld = null;
-    }
-
     private void renderBiomeSave() {
         ImGui.inputTextWithHint("##Biome Name", "Biome Name", biomeName);
         ImGui.sameLine();
-        if(mapViewerWorld == null) ImGui.beginDisabled();
+        if(viewer.getMapViewerWorld() == null) ImGui.beginDisabled();
         if(ImGui.button("Save Biome")) {
             Biome newBiome = Biome.builder()
                     .name(NamespaceID.from(biomeName.get()))
@@ -51,9 +48,9 @@ public class BiomeCreatorWindow {
                             .grassColor(new Color(Settings.GRASS_COLOR.getColor()[0], Settings.GRASS_COLOR.getColor()[1], Settings.GRASS_COLOR.getColor()[2]).getRGB())
                             .build())
                     .build();
-            mapViewerWorld.registerBiome(newBiome);
+            viewer.getMapViewerWorld().registerBiome(newBiome);
         }
-        if(mapViewerWorld == null) ImGui.endDisabled();
+        if(viewer.getMapViewerWorld() == null) ImGui.endDisabled();
     }
 
     private void renderColorPicker() {

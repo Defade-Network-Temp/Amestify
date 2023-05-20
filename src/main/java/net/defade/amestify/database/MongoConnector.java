@@ -16,7 +16,7 @@ public class MongoConnector {
     private boolean isConnected = false;
 
     public CompletableFuture<Void> connect(String host, int port, String username, char[] password, String authDatabase) {
-        if(isConnected) return CompletableFuture.completedFuture(null);
+        if(isConnected) disconnect();
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         CompletableFuture.runAsync(() -> {

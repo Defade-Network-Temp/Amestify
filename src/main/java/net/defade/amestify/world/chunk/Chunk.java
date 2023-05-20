@@ -32,7 +32,7 @@ public class Chunk {
     private final int maxY;
 
     private final List<Section> sections = new ArrayList<>();
-    private int[] heightMap = new int[256];
+    private final int[] heightMap = new int[256];
 
     public Chunk(MapViewerWorld mapViewerWorld, ChunkPos chunkPos, int minY, int maxY, CompressionType compressionType, InputStream inputStream) throws IOException {
         this.mapViewerWorld = mapViewerWorld;
@@ -94,10 +94,6 @@ public class Chunk {
         return heightMap[(x & 0xF) + ((z & 0xF) << 4)] + minY -1;
     }
 
-    public void clearHeightMap() {
-        heightMap = null;
-    }
-
     private void readSections(ListTag<?> sectionsNBT) {
         if(sectionsNBT == null) {
             return;
@@ -156,7 +152,7 @@ public class Chunk {
     private int getBiomeId(String biomeId) {
         if(biomeId == null) return 0;
 
-        return Objects.requireNonNullElse(mapViewerWorld.getMinecraftBiomeByName(biomeId), mapViewerWorld.getPlainsBiome()).id();
+        return Objects.requireNonNullElse(mapViewerWorld.getBiomeByName(biomeId), mapViewerWorld.getPlainsBiome()).id();
     }
 
     private Palette readBiomeNBTPalette(AdaptivePalette adaptivePalette, CompoundTag paletteNBT) {

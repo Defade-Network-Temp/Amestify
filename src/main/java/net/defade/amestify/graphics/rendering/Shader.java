@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
@@ -111,12 +111,6 @@ public class Shader {
         FloatBuffer matBuffer = BufferUtils.createFloatBuffer(16);
         mat4.get(matBuffer);
         GL46.glUniformMatrix4fv(varLocation, false, matBuffer);
-    }
-
-    public void uploadVec4f(String varName, float x, float y, float z, float w) {
-        int varLocation = GL46.glGetUniformLocation(shaderProgramId, varName);
-        attach();
-        GL46.glUniform4f(varLocation, x, y, z, w);
     }
 
     public void uploadVec4i(String varName, int x, int y, int z, int w) {

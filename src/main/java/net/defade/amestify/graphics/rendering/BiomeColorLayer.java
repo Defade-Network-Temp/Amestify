@@ -1,8 +1,7 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
 import net.defade.amestify.world.biome.Biome;
 import org.lwjgl.BufferUtils;
-
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;

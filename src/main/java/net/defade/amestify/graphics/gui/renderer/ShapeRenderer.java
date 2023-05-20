@@ -1,7 +1,7 @@
 package net.defade.amestify.graphics.gui.renderer;
 
-import net.defade.amestify.graphics.Assets;
-import net.defade.amestify.graphics.Camera;
+import net.defade.amestify.graphics.rendering.Assets;
+import net.defade.amestify.graphics.rendering.Camera;
 
 import static org.lwjgl.opengl.GL46.*;
 

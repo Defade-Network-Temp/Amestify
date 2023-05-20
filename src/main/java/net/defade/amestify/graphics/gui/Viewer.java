@@ -1,17 +1,26 @@
-package net.defade.amestify.graphics.gui.viewer;
+package net.defade.amestify.graphics.gui;
 
 import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.flag.ImGuiCond;
+import imgui.flag.ImGuiHoveredFlags;
 import imgui.flag.ImGuiStyleVar;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
 import net.defade.amestify.control.MouseListener;
-import net.defade.amestify.graphics.Assets;
-import net.defade.amestify.graphics.Camera;
-import net.defade.amestify.graphics.Framebuffer;
-import net.defade.amestify.graphics.Window;
-import net.defade.amestify.graphics.gui.GUI;
+import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.graphics.gui.dialog.Dialog;
+import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
+import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
+import net.defade.amestify.graphics.gui.window.UIComponent;
+import net.defade.amestify.world.MapViewerRegion;
+import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
+import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
+import net.defade.amestify.graphics.gui.dialog.WorldLoaderDialog;
+import net.defade.amestify.graphics.rendering.Assets;
+import net.defade.amestify.graphics.rendering.Camera;
+import net.defade.amestify.graphics.rendering.Framebuffer;
+import net.defade.amestify.graphics.rendering.Window;
 import net.defade.amestify.graphics.gui.renderer.ShapeRenderer;
 import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
@@ -20,11 +29,15 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector4f;
 import java.lang.Math;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
-public class ViewerGUI extends GUI {
+public class Viewer {
+    private final MongoConnector mongoConnector = new MongoConnector();
+
     private final Framebuffer framebuffer = new Framebuffer(1920, 1080);
     private final ShapeRenderer shapeRenderer = new ShapeRenderer();
 
@@ -36,38 +49,37 @@ public class ViewerGUI extends GUI {
 
     private Vector2i selectedRegionOrigin = null;
 
-    private final DatabaseConnectorGUI databaseConnectorGUI = new DatabaseConnectorGUI();
-    private final WorldLoaderGUI worldLoaderGUI = new WorldLoaderGUI();
-    private final AmethystSaveFileGUI amethystSaveFileGUI = new AmethystSaveFileGUI();
-    private final BiomeCreatorWindow biomeCreatorWindow = new BiomeCreatorWindow();
-    private final BiomeSelectorWindow biomeSelectorWindow = new BiomeSelectorWindow();
+    private final Map<Class<? extends UIComponent>, UIComponent> uiComponents = new HashMap<>();
+    private final Map<Class<? extends Dialog>, Dialog> dialogs = new HashMap<>();
 
     private boolean isViewDisabled = false;
 
     private MapViewerWorld mapViewerWorld;
 
-    @Override
-    public void renderImgui(float deltaTime) {
+    public Viewer() {
+        uiComponents.put(BiomeCreatorUI.class, new BiomeCreatorUI(this));
+        uiComponents.put(BiomeSelectorUI.class, new BiomeSelectorUI(this));
+
+        dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
+        dialogs.put(WorldLoaderDialog.class, new WorldLoaderDialog(this));
+        dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
+    }
+
+    public void render(float deltaTime) {
         setupDockspace();
+
+        dialogs.values().forEach(dialog -> {
+            if(dialog.isEnabled()) {
+                dialog.render();
+
+                disableView();
+            }
+        });
+
         renderMenuBar();
 
-        if(!databaseConnectorGUI.isConnected()) {
-            databaseConnectorGUI.renderImGui();
-            disableView();
-        } else if(!worldLoaderGUI.isDone()){
-            worldLoaderGUI.renderImGui();
-            disableView();
-        } else if(!amethystSaveFileGUI.isDone()) {
-            amethystSaveFileGUI.renderImGui();
-            disableView();
-        } else {
-            if(mapViewerWorld == null) {
-                setWorld(worldLoaderGUI.getWorld());
-            }
-        }
+        uiComponents.values().forEach(UIComponent::render);
 
-        biomeCreatorWindow.render();
-        biomeSelectorWindow.render();
         renderTooltipInfo();
 
         renderMap(deltaTime);
@@ -77,16 +89,44 @@ public class ViewerGUI extends GUI {
         ImGui.end(); // End the dockspace
     }
 
-    @Override
-    public boolean usesImGui() {
-        return true;
+    public MongoConnector getMongoConnector() {
+        return mongoConnector;
     }
 
-    private void setWorld(MapViewerWorld mapViewerWorld) {
+    public MapViewerWorld getMapViewerWorld() {
+        return mapViewerWorld;
+    }
+
+    public void setMapViewerWorld(MapViewerWorld mapViewerWorld) {
         this.mapViewerWorld = mapViewerWorld;
-        biomeCreatorWindow.setWorld(mapViewerWorld);
-        biomeSelectorWindow.setWorld(mapViewerWorld);
-        amethystSaveFileGUI.setWorld(mapViewerWorld);
+    }
+
+    private <T extends UIComponent> T getUIComponent(Class<T> clazz) {
+        UIComponent uiComponent = uiComponents.get(clazz);
+        if(uiComponent == null) {
+            throw new RuntimeException("UIComponent " + clazz.getName() + " is not registered");
+        }
+
+        if (!clazz.isAssignableFrom(uiComponent.getClass())) {
+            throw new RuntimeException("UIComponent " + uiComponent.getClass().getName() +
+                    " is not assignable from " + clazz.getName());
+        } else {
+            return clazz.cast(uiComponent);
+        }
+    }
+
+    private <T extends Dialog> T getDialog(Class<T> clazz) {
+        Dialog dialog = dialogs.get(clazz);
+        if(dialog == null) {
+            throw new RuntimeException("Dialog " + clazz.getName() + " is not registered");
+        }
+
+        if (!clazz.isAssignableFrom(dialog.getClass())) {
+            throw new RuntimeException("Dialog " + dialog.getClass().getName() +
+                    " is not assignable from " + clazz.getName());
+        } else {
+            return clazz.cast(dialog);
+        }
     }
 
     private void setupDockspace() {
@@ -110,22 +150,53 @@ public class ViewerGUI extends GUI {
         if(ImGui.beginMenuBar()) {
             if(ImGui.beginMenu("File")) {
                 if(ImGui.menuItem("Open world")) {
-                    worldLoaderGUI.reset();
-                    biomeSelectorWindow.reset();
-                    biomeCreatorWindow.reset();
-                    mapViewerWorld = null;
+                    getDialog(WorldLoaderDialog.class).enable();
                 }
                 ImGui.endMenu();
             }
 
+            if(mapViewerWorld == null) ImGui.beginDisabled(true);
             if(ImGui.beginMenu("Save")) {
                 if(ImGui.menuItem("Save to amethyst file")) {
-                    amethystSaveFileGUI.reset();
+                    if(mapViewerWorld != null) getDialog(AmethystSaveFileGUI.class).enable();
                 }
 
+                if(!mongoConnector.isConnected()) ImGui.beginDisabled(true);
                 if(ImGui.menuItem("Save to database")) {
                     // TODO
                 }
+                if(!mongoConnector.isConnected()) {
+                    ImGui.endDisabled();
+                    if(ImGui.isItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+                        ImGui.beginTooltip();
+                        ImGui.textColored(255,185, 0, 255, "You must be connected to a database to do this!");
+                        ImGui.endTooltip();
+                    }
+                }
+
+                ImGui.endMenu();
+            }
+            if(mapViewerWorld == null) {
+                ImGui.endDisabled();
+                if(ImGui.isItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+                    ImGui.beginTooltip();
+                    ImGui.textColored(255,185, 0, 255, "You must open a world to do this!");
+                    ImGui.endTooltip();
+                }
+            }
+
+            if(ImGui.beginMenu("Database")) {
+                if(ImGui.menuItem("Connect to a database")) {
+                    getDialog(DatabaseConnectorDialog.class).enable();
+                }
+
+                boolean isDisabled = !mongoConnector.isConnected();
+                if(isDisabled) ImGui.beginDisabled(true);
+                if(ImGui.menuItem("Disconnect from database")) {
+                    mongoConnector.disconnect();
+                }
+                if(isDisabled) ImGui.endDisabled();
+
                 ImGui.endMenu();
             }
 
@@ -153,13 +224,13 @@ public class ViewerGUI extends GUI {
         updateControllers(deltaTime);
         framebuffer.bind();
 
-        glClearColor(1, 1, 1, 1);
+        glClearColor(43 / 255f, 42 / 255f, 51 / 255f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         Assets.CHUNK_SHADER.attach();
         Assets.CHUNK_SHADER.uploadMat4f("projectionUniform", camera.getProjectionMatrix());
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
-        Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", biomeSelectorWindow.shouldShowBiomeLayer());
+        Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", getUIComponent(BiomeSelectorUI.class).shouldShowBiomeLayer());
         uploadHighlightedElements();
 
         Assets.BLOCK_SHEET.bind();
@@ -275,7 +346,7 @@ public class ViewerGUI extends GUI {
 
                     for (int x = minRegionBlockX; x <= maxRegionBlockX; x++) {
                         for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z++) {
-                            mapViewerRegion.setBiome(x, z, biomeSelectorWindow.getSelectedBiome());
+                            mapViewerRegion.setBiome(x, z, getUIComponent(BiomeSelectorUI.class).getSelectedBiome());
                         }
                     }
 

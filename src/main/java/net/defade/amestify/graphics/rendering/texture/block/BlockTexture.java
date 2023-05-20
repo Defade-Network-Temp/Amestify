@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.texture.block;
+package net.defade.amestify.graphics.rendering.texture.block;
 
 /**
  * @param isTranslucent true if texture has transparent pixels

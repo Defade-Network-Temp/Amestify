@@ -1,6 +1,6 @@
 package net.defade.amestify.world.biome;
 
-import net.defade.amestify.graphics.texture.BiomeTexture;
+import net.defade.amestify.graphics.rendering.texture.BiomeTexture;
 import net.defade.amestify.utils.NamespaceID;
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -1,5 +1,6 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
+import net.defade.amestify.utils.Utils;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -28,7 +29,7 @@ public class Camera {
 
     public void update(float deltaTime) {
         if(resetLerpTime >= 0) {
-            resetLerpTime = clamp(resetLerpTime + (deltaTime * 2), 0, 1);
+            resetLerpTime = (float) Utils.clamp(0, 1, resetLerpTime + (deltaTime * 2));
             setZoom(lerp(zoomLerp, 1, resetLerpTime));
             adjustProjection();
 
@@ -100,9 +101,5 @@ public class Camera {
 
     private static float lerp(float start, float end, float t) {
         return start + t * (end - start);
-    }
-
-    private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
     }
 }

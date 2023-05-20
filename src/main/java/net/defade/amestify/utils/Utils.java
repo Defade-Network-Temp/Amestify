@@ -1,5 +1,7 @@
 package net.defade.amestify.utils;
 
+import imgui.ImGui;
+import imgui.ImGuiStyle;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +12,10 @@ public class Utils {
 
     public static int bitsToRepresent(int n) {
         return Integer.SIZE - Integer.numberOfLeadingZeros(n);
+    }
+
+    public static double clamp(double min, double max, double value) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public static Path createAmethystTempFile(String fileName) throws IOException {
@@ -44,5 +50,32 @@ public class Utils {
 
     public static float[] rgbToFloat(int red, int green, int blue) {
         return new float[] {red / 255f, green / 255f, blue / 255f};
+    }
+
+    public static void imGuiCenterNextItem(String label) {
+        ImGuiStyle style = ImGui.getStyle();
+
+        float size = ImGui.calcTextSize(label).x + style.getFramePadding().x * 2.0f;
+        float avail = ImGui.getContentRegionAvail().x;
+
+        float off = (avail - size) * 0.5f;
+        if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
+    }
+
+    public static void imGuiProgressBar(String text, ProgressTracker progressTracker) {
+        float windowWidth = ImGui.getWindowSizeX();
+        float windowHeight = ImGui.getWindowSizeY();
+        float width = 600;
+        float height = 30;
+        ImGui.setCursorPosX((windowWidth - width) / 2);
+        ImGui.setCursorPosY((windowHeight - height) / 2);
+
+        ImGui.progressBar(progressTracker.getProgress(), width, height, "");
+        ImGui.sameLine(
+                (windowWidth - width) / 2 // Set text start at the start of the progress bar
+                        + (width / 2)  // Set text start at the middle of the progress bar
+                        - (ImGui.calcTextSize(text).x / 2) // Set text at the middle of the text
+        );
+        ImGui.text(text);
     }
 }

@@ -1,9 +1,10 @@
-package net.defade.amestify.graphics.gui.viewer;
+package net.defade.amestify.graphics.gui.dialog;
 
 import imgui.ImGui;
-import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
+import net.defade.amestify.graphics.gui.Viewer;
+import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.AnvilToViewerRegionConverter;
 import net.defade.amestify.world.MapViewerWorld;
 import org.lwjgl.PointerBuffer;
@@ -16,17 +17,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-public class WorldLoaderGUI {
+public class WorldLoaderDialog extends Dialog {
+    private final Viewer viewer;
+
     private Path worldPath = null;
     private final AnvilToViewerRegionConverter anvilToViewerRegionConverter = new AnvilToViewerRegionConverter();
 
-    public void renderImGui() {
+    public WorldLoaderDialog(Viewer viewer) {
+        this.viewer = viewer;
+    }
+
+    @Override
+    public void render() {
         if(anvilToViewerRegionConverter.getMapViewerWorldFuture() == null || anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
             renderSelectWorldDialog();
         } else {
             if(!anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone()) {
                 renderWorldLoadingDialog();
             }
+        }
+
+        if(anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone()) {
+            viewer.setMapViewerWorld(anvilToViewerRegionConverter.getMapViewerWorldFuture().join());
+            disable();
         }
     }
 
@@ -47,7 +60,7 @@ public class WorldLoaderGUI {
             }
         }
 
-        centerNextItem(buttonText);
+        Utils.imGuiCenterNextItem(buttonText);
         if(isWorldButtonRed) ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
         if(ImGui.button(buttonText)) {
             openFolderDialog();
@@ -55,7 +68,7 @@ public class WorldLoaderGUI {
         if(isWorldButtonRed) ImGui.popStyleColor();
 
         if(isPathValid()) {
-            centerNextItem("Load");
+            Utils.imGuiCenterNextItem("Load");
             if(ImGui.button("Load")) {
                 anvilToViewerRegionConverter.convert(worldPath);
             }
@@ -107,44 +120,18 @@ public class WorldLoaderGUI {
         String text = "Loaded " + anvilToViewerRegionConverter.getProgressTracker().getCurrent() + " out of " +
                 anvilToViewerRegionConverter.getProgressTracker().getTotal() + " chunks (" +
                 (int) (anvilToViewerRegionConverter.getProgressTracker().getProgress() * 100) + "%)";
-        float windowWidth = ImGui.getWindowSizeX();
-        float windowHeight = ImGui.getWindowSizeY();
-        float width = 600;
-        float height = 30;
-        ImGui.setCursorPosX((windowWidth - width) / 2);
-        ImGui.setCursorPosY((windowHeight - height) / 2);
-
-        ImGui.progressBar(anvilToViewerRegionConverter.getProgressTracker().getProgress(), width, height, "");
-        ImGui.sameLine(
-                (windowWidth - width) / 2 // Set text start at the start of the progress bar
-                        + (width / 2)  // Set text start at the middle of the progress bar
-                        - (ImGui.calcTextSize(text).x / 2) // Set text at the middle of the text
-        );
-        ImGui.text(text);
+        Utils.imGuiProgressBar(text, anvilToViewerRegionConverter.getProgressTracker());
 
         ImGui.end();
-    }
-
-    private void centerNextItem(String label) {
-        ImGuiStyle style = ImGui.getStyle();
-
-        float size = ImGui.calcTextSize(label).x + style.getFramePadding().x * 2.0f;
-        float avail = ImGui.getContentRegionAvail().x;
-
-        float off = (avail - size) * 0.5f;
-        if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
-    }
-
-    public boolean isDone() {
-        return anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone() &&
-                !anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally();
     }
 
     public MapViewerWorld getWorld() {
         return anvilToViewerRegionConverter.getMapViewerWorldFuture().join();
     }
 
-    public void reset() {
+    @Override
+    protected void reset() {
         anvilToViewerRegionConverter.reset();
+        viewer.setMapViewerWorld(null);
     }
 }

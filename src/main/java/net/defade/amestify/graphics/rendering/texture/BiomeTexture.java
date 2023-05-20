@@ -1,5 +1,6 @@
-package net.defade.amestify.graphics.texture;
+package net.defade.amestify.graphics.rendering.texture;
 
+import net.defade.amestify.utils.Utils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -54,8 +55,8 @@ public class BiomeTexture {
     }
 
     private static int grassColor(double temperature, double downfall) {
-        temperature = Math.max(0.0, Math.min(temperature, 1.0));
-        downfall = Math.max(0.0, Math.min(downfall, 1.0));
+        temperature = Utils.clamp(0.0, 1.0, temperature);
+        downfall = Utils.clamp(0.0, 1.0, downfall);
 
         downfall = downfall * temperature;
         int i = (int) ((1.0D - temperature) * 255.0D);
@@ -65,8 +66,8 @@ public class BiomeTexture {
     }
 
     private static int foliageColor(double temperature, double downfall) {
-        temperature = Math.max(0.0, Math.min(temperature, 1.0));
-        downfall = Math.max(0.0, Math.min(downfall, 1.0));
+        temperature = Utils.clamp(0.0, 1.0, temperature);
+        downfall = Utils.clamp(0.0, 1.0, downfall);
 
         downfall = downfall * temperature;
         int i = (int) ((1.0D - temperature) * 255.0D);

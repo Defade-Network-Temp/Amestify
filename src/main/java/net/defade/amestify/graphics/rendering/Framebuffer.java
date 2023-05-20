@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
 import static org.lwjgl.opengl.GL46.*;
 

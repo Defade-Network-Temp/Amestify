@@ -1,7 +1,7 @@
 package net.defade.amestify.world.savers;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
+import net.defade.amestify.world.MapViewerRegion;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.MapViewerWorld;
@@ -81,7 +81,6 @@ public class AmethystSaver {
     }
 
     private void writeFileHeader(String config) throws IOException {
-        System.out.println("Config: " + config);
         Collection<Biome> biomes = mapViewerWorld.unmodifiableBiomeCollection();
 
         outputFile.writeUTF(config);
@@ -140,20 +139,7 @@ public class AmethystSaver {
             AdaptivePalette blockPalette = section.getBlockPalette();
             AdaptivePalette biomePalette = section.getBiomePalette();
 
-            arraySize = arraySize + Byte.BYTES;
-            if (blockPalette.isFilledPalette()) {
-                arraySize = arraySize + Short.BYTES;
-            } else {
-                FlexiblePalette flexiblePalette = blockPalette.getAsFlexiblePalette();
-                arraySize = arraySize + Byte.BYTES + Short.BYTES + (flexiblePalette.getPaletteToValueList().size() * Short.BYTES) + Short.BYTES + Short.BYTES + (flexiblePalette.values().length * Long.BYTES);
-            }
-
-            if (biomePalette.isFilledPalette()) {
-                arraySize = arraySize + Short.BYTES;
-            } else {
-                FlexiblePalette flexiblePalette = biomePalette.getAsFlexiblePalette();
-                arraySize = arraySize + Byte.BYTES + Short.BYTES + (flexiblePalette.getPaletteToValueList().size() * Short.BYTES) + Short.BYTES + Short.BYTES + (flexiblePalette.values().length * Long.BYTES);
-            }
+            arraySize = arraySize + Byte.BYTES + calculatePaletteSize(blockPalette) + calculatePaletteSize(biomePalette);
         }
 
         arraySize = arraySize + Integer.BYTES;
@@ -203,6 +189,15 @@ public class AmethystSaver {
             for (long biomeValue : biomeValues) {
                 dataOutputStream.writeLong(biomeValue);
             }
+        }
+    }
+
+    private static int calculatePaletteSize(AdaptivePalette palette) {
+        if (palette.isFilledPalette()) {
+            return Short.BYTES;
+        } else {
+            FlexiblePalette flexiblePalette = palette.getAsFlexiblePalette();
+            return Byte.BYTES + Short.BYTES + (flexiblePalette.getPaletteToValueList().size() * Short.BYTES) + Short.BYTES + Short.BYTES + (flexiblePalette.values().length * Long.BYTES);
         }
     }
 }

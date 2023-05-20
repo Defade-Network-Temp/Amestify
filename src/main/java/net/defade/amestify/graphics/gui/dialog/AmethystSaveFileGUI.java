@@ -1,12 +1,12 @@
-package net.defade.amestify.graphics.gui.viewer;
+package net.defade.amestify.graphics.gui.dialog;
 
 import imgui.ImGui;
-import imgui.ImGuiStyle;
 import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
+import net.defade.amestify.graphics.gui.Viewer;
 import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.MapViewerWorld;
+import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.savers.AmethystSaver;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -18,9 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-public class AmethystSaveFileGUI {
+public class AmethystSaveFileGUI extends Dialog {
+    private final Viewer viewer;
     private final AmethystSaver amethystSaver = new AmethystSaver();
-    private MapViewerWorld world;
 
     private Path saveFilePath;
     private final ImString config = new ImString();
@@ -29,30 +29,19 @@ public class AmethystSaveFileGUI {
     private final ProgressTracker progressTracker = new ProgressTracker();
     private CompletableFuture<Path> saveFuture;
 
-    private boolean hasUserAcknowledgedSave = true;
+    public AmethystSaveFileGUI(Viewer viewer) {
+        this.viewer = viewer;
+    }
 
-    public void renderImGui() {
+    @Override
+    public void render() {
         if(saveFuture == null || saveFuture.isCompletedExceptionally()) {
             renderSaveFileDialog();
         } else if(!saveFuture.isDone()) {
             renderSavingDialog();
         } else {
-            if(!hasUserAcknowledgedSave) {
-                renderSaveCompleteDialog();
-            }
+            renderSaveCompleteDialog();
         }
-    }
-
-    public boolean isDone() {
-        return saveFuture == null && hasUserAcknowledgedSave;
-    }
-
-    public void setWorld(MapViewerWorld world) {
-        this.world = world;
-    }
-
-    public void reset() {
-        hasUserAcknowledgedSave = false;
     }
 
     private void renderSaveFileDialog() {
@@ -60,32 +49,32 @@ public class AmethystSaveFileGUI {
 
         if(saveFuture != null && saveFuture.isCompletedExceptionally()) {
             String errorMessage = saveFuture.handle((path, throwable) -> throwable.getMessage()).join();
-            centerNextItem(errorMessage);
+            Utils.imGuiCenterNextItem(errorMessage);
             ImGui.textColored(255, 0, 0, 255, errorMessage);
         }
 
         if(saveFilePath != null && Files.exists(saveFilePath)) {
             String warningText = "Warning: File already exists! It will be overwritten.";
-            centerNextItem(warningText);
+            Utils.imGuiCenterNextItem(warningText);
             ImGui.textColored(255, 200, 0, 255, warningText);
         }
 
         String buttonText = saveFilePath == null ? "Select destination file" : saveFilePath.getFileName().toString();
-        centerNextItem(buttonText);
+        Utils.imGuiCenterNextItem(buttonText);
         if(ImGui.button(buttonText)) {
             openSaveFileDialog();
         }
 
         if(ImGui.button("Modify config")) isModifyingConfig = true;
 
-        centerNextItem("Save");
+        Utils.imGuiCenterNextItem("Save");
         if(saveFilePath == null) ImGui.beginDisabled();
         if(ImGui.button("Save")) {
             String config = new String(this.config.getData()); // ImString generates the String
             // when the dirty flag is set to true, but the text dialog doesn't update this flag,
             // so we can't just get the String from the ImString#get() method...
 
-            saveFuture = amethystSaver.saveToTempFile(saveFilePath.getFileName().toString(), config, world, progressTracker);
+            saveFuture = amethystSaver.saveToTempFile(saveFilePath.getFileName().toString(), config, viewer.getMapViewerWorld(), progressTracker);
             saveFuture.thenApply(path -> {
                 if(path != null) {
                     try {
@@ -98,11 +87,9 @@ public class AmethystSaveFileGUI {
 
                 return path;
             });
-
-            hasUserAcknowledgedSave = false;
         }
-        if(saveFilePath == null) ImGui.endDisabled();
 
+        if(saveFilePath == null) ImGui.endDisabled();
         ImGui.end();
 
         if(isModifyingConfig) {
@@ -119,20 +106,7 @@ public class AmethystSaveFileGUI {
 
         String text = "Saved " + progressTracker.getCurrent() + " out of " + progressTracker.getTotal() + " chunks (" +
                 (int) (progressTracker.getProgress() * 100) + "%)";
-        float windowWidth = ImGui.getWindowSizeX();
-        float windowHeight = ImGui.getWindowSizeY();
-        float width = 600;
-        float height = 30;
-        ImGui.setCursorPosX((windowWidth - width) / 2);
-        ImGui.setCursorPosY((windowHeight - height) / 2);
-
-        ImGui.progressBar(progressTracker.getProgress(), width, height, "");
-        ImGui.sameLine(
-                (windowWidth - width) / 2 // Set text start at the start of the progress bar
-                        + (width / 2)  // Set text start at the middle of the progress bar
-                        - (ImGui.calcTextSize(text).x / 2) // Set text at the middle of the text
-        );
-        ImGui.text(text);
+        Utils.imGuiProgressBar(text, progressTracker);
 
         ImGui.end();
     }
@@ -141,10 +115,10 @@ public class AmethystSaveFileGUI {
         ImGui.setNextWindowSize(80, 60);
         ImGui.begin("Complete!", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        centerNextItem("Close");
+        Utils.imGuiCenterNextItem("Close");
         if(ImGui.button("Close")) {
-            hasUserAcknowledgedSave = true;
             saveFuture = null;
+            disable();
         }
 
         ImGui.end();
@@ -161,15 +135,5 @@ public class AmethystSaveFileGUI {
 
             NativeFileDialog.nNFD_Free(pPath.get(0));
         }
-    }
-
-    private static void centerNextItem(String label) {
-        ImGuiStyle style = ImGui.getStyle();
-
-        float size = ImGui.calcTextSize(label).x + style.getFramePadding().x * 2.0f;
-        float avail = ImGui.getContentRegionAvail().x;
-
-        float off = (avail - size) * 0.5f;
-        if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
     }
 }

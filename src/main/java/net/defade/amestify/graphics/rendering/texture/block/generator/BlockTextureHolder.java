@@ -1,4 +1,4 @@
-package net.defade.amestify.graphics.texture.block.generator;
+package net.defade.amestify.graphics.rendering.texture.block.generator;
 
 import java.util.List;
 

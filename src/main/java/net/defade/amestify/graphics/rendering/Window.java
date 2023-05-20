@@ -1,7 +1,7 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
-import net.defade.amestify.graphics.gui.GUI;
 import net.defade.amestify.graphics.gui.ImGUILayer;
+import net.defade.amestify.graphics.gui.Viewer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
@@ -15,19 +15,17 @@ public class Window {
     private static long TIME_STARTED;
 
     private static int width, height;
-    private static String title;
     private static long windowPointer;
 
     private static final ImGUILayer imGUILayer = new ImGUILayer();
 
-    private static GUI gui;
+    private static Viewer viewer;
 
     public static void init(int width, int height, String title) {
         Thread.currentThread().setName("Render Thread");
 
         Window.width = width;
         Window.height = height;
-        Window.title = title;
 
         GLFWErrorCallback.createPrint(System.err).set();
 
@@ -65,8 +63,8 @@ public class Window {
         GLUtil.setupDebugMessageCallback(System.err);
     }
 
-    public static void loop(GUI startGUI) {
-        gui = startGUI;
+    public static void loop() {
+        viewer = new Viewer();
         TIME_STARTED = System.nanoTime();
         long beginTime = 0;
         long endTime;
@@ -75,11 +73,7 @@ public class Window {
         while (!glfwWindowShouldClose(windowPointer)) {
             glfwPollEvents();
 
-            if (deltaTime >= 0) {
-                gui.render(deltaTime);
-            }
-
-            imGUILayer.update(deltaTime / 1e9f); // ImGUI expects a delta time in seconds
+            imGUILayer.render(deltaTime / 1e9f); // ImGUI expects a delta time in seconds
 
             glfwSwapBuffers(windowPointer);
 
@@ -107,15 +101,11 @@ public class Window {
         return windowPointer;
     }
 
-    public static GUI getGUI() {
-        return gui;
+    public static Viewer getViewerWindow() {
+        return viewer;
     }
 
     private static long getTime() {
         return System.nanoTime() - TIME_STARTED;
-    }
-
-    public static float getTargetAspectRatio() {
-        return 16f / 9f;
     }
 }

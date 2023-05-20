@@ -7,8 +7,6 @@ public class MouseListener {
     private static double scrollY = 0;
     private static double xPos = 0;
     private static double yPos = 0;
-    private static double lastX = 0;
-    private static double lastY = 0;
     private static final boolean[] buttonsPressed = new boolean[9];
     private static boolean isDragging = false;
 
@@ -22,8 +20,6 @@ public class MouseListener {
     }
 
     public static void mousePosCallback(double x, double y) {
-        lastX = xPos;
-        lastY = yPos;
         xPos = x;
         yPos = y;
         isDragging = buttonsPressed[0] || buttonsPressed[1] || buttonsPressed[2];
@@ -37,8 +33,6 @@ public class MouseListener {
     public static void endFrame() {
         scrollX = 0;
         scrollY = 0;
-        lastX = xPos;
-        lastY = yPos;
     }
 
     public static double getX() {

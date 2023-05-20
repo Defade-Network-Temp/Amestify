@@ -1,9 +1,9 @@
-package net.defade.amestify.graphics;
+package net.defade.amestify.graphics.rendering;
 
-import net.defade.amestify.graphics.texture.BiomeTexture;
-import net.defade.amestify.graphics.texture.block.BlockSheet;
-import net.defade.amestify.graphics.texture.block.generator.BlockTextureData;
-import net.defade.amestify.graphics.texture.block.generator.BlockTextureMap;
+import net.defade.amestify.graphics.rendering.texture.BiomeTexture;
+import net.defade.amestify.graphics.rendering.texture.block.BlockSheet;
+import net.defade.amestify.graphics.rendering.texture.block.generator.BlockTextureData;
+import net.defade.amestify.graphics.rendering.texture.block.generator.BlockTextureMap;
 import net.defade.amestify.world.Block;
 import java.io.FileNotFoundException;
 import java.io.IOException;

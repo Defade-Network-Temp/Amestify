@@ -1,6 +1,5 @@
 package net.defade.amestify.world;
 
-import net.defade.amestify.graphics.gui.viewer.MapViewerRegion;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.loaders.anvil.AnvilMapLoader;
 import java.io.FileNotFoundException;

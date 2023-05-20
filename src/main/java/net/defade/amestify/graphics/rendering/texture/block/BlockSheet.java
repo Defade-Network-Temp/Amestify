@@ -1,9 +1,8 @@
-package net.defade.amestify.graphics.texture.block;
+package net.defade.amestify.graphics.rendering.texture.block;
 
-import net.defade.amestify.graphics.texture.block.generator.BlockTextureData;
+import net.defade.amestify.graphics.rendering.texture.block.generator.BlockTextureData;
 import net.defade.amestify.world.Block;
 import org.lwjgl.BufferUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
