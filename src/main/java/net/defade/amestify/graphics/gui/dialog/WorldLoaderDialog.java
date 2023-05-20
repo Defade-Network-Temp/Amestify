@@ -44,7 +44,7 @@ public class WorldLoaderDialog extends Dialog {
     }
 
     private void renderSelectWorldDialog() {
-        ImGui.setNextWindowSize(200, 100);
+        ImGui.setNextWindowSize(200, 115);
         ImGui.begin("Select world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
         String buttonText;
@@ -60,7 +60,7 @@ public class WorldLoaderDialog extends Dialog {
             }
         }
 
-        Utils.imGuiCenterNextItem(buttonText);
+        Utils.imGuiAlignNextItem(buttonText, 0);
         if(isWorldButtonRed) ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
         if(ImGui.button(buttonText)) {
             openFolderDialog();
@@ -68,7 +68,7 @@ public class WorldLoaderDialog extends Dialog {
         if(isWorldButtonRed) ImGui.popStyleColor();
 
         if(isPathValid()) {
-            Utils.imGuiCenterNextItem("Load");
+            Utils.imGuiAlignNextItem("Load", 0);
             if(ImGui.button("Load")) {
                 anvilToViewerRegionConverter.convert(worldPath);
             }
@@ -79,6 +79,11 @@ public class WorldLoaderDialog extends Dialog {
             ImGui.textWrapped(anvilToViewerRegionConverter.getMapViewerWorldFuture().handle((mapViewerWorld, throwable) -> throwable.getMessage()).join());
             ImGui.popStyleColor();
         }
+
+        Utils.imGuiAlignNextItem("Cancel", 1);
+        ImGui.pushStyleColor(ImGuiCol.Button, 215, 45, 45, 255);
+        if(ImGui.button("Cancel")) disable();
+        ImGui.popStyleColor();
 
         ImGui.end();
     }

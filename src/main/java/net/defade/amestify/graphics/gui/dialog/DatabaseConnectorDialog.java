@@ -6,6 +6,7 @@ import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
 import net.defade.amestify.graphics.gui.Viewer;
+import net.defade.amestify.utils.Utils;
 import java.util.concurrent.CompletableFuture;
 
 public class DatabaseConnectorDialog extends Dialog {
@@ -35,12 +36,22 @@ public class DatabaseConnectorDialog extends Dialog {
         ImGui.inputTextWithHint("##Password", "Password", password, ImGuiInputTextFlags.Password);
         ImGui.inputTextWithHint("##Database", "Database", database);
 
-        if((connectFuture == null || connectFuture.isDone()) && ImGui.button("Connect")) {
-            connectFuture = viewer.getMongoConnector().connect(host.get(), Integer.parseInt(port.get()), username.get(), password.get().toCharArray(), database.get());
-            connectFuture.exceptionally(throwable -> {
-                this.throwable = throwable;
-                return null;
-            });
+        if((connectFuture == null || connectFuture.isDone())) {
+            ImGui.pushStyleColor(ImGuiCol.Button, 15, 150, 15, 255);
+            if(ImGui.button("Connect")) {
+                connectFuture = viewer.getMongoConnector().connect(host.get(), Integer.parseInt(port.get()), username.get(), password.get().toCharArray(), database.get());
+                connectFuture.exceptionally(throwable -> {
+                    this.throwable = throwable;
+                    return null;
+                });
+            }
+            ImGui.popStyleColor();
+
+            ImGui.sameLine();
+            Utils.imGuiAlignNextItem("Cancel", 1);
+            ImGui.pushStyleColor(ImGuiCol.Button, 215, 45, 45, 255);
+            if(ImGui.button("Cancel")) disable();
+            ImGui.popStyleColor();
         }
 
         if(connectFuture != null) {

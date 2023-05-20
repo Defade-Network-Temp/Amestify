@@ -1,6 +1,7 @@
 package net.defade.amestify.graphics.gui.dialog;
 
 import imgui.ImGui;
+import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
@@ -45,29 +46,38 @@ public class AmethystSaveFileGUI extends Dialog {
     }
 
     private void renderSaveFileDialog() {
-        ImGui.begin("Save world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
+        boolean willFileBeOverwritten = saveFilePath != null && Files.exists(saveFilePath);
+        ImGui.setNextWindowSize(230, willFileBeOverwritten ? 180 : 135);
+        ImGui.begin("Save world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
         if(saveFuture != null && saveFuture.isCompletedExceptionally()) {
             String errorMessage = saveFuture.handle((path, throwable) -> throwable.getMessage()).join();
-            Utils.imGuiCenterNextItem(errorMessage);
+            Utils.imGuiAlignNextItem(errorMessage, 0);
             ImGui.textColored(255, 0, 0, 255, errorMessage);
         }
 
-        if(saveFilePath != null && Files.exists(saveFilePath)) {
-            String warningText = "Warning: File already exists! It will be overwritten.";
-            Utils.imGuiCenterNextItem(warningText);
-            ImGui.textColored(255, 200, 0, 255, warningText);
+        if(willFileBeOverwritten) {
+            String warningText1 = "Warning: File already exists!";
+            String warningText2 = "It will be overwritten!";
+            ImGui.pushStyleColor(ImGuiCol.Text, 255, 200, 0, 255);
+            Utils.imGuiAlignNextItem(warningText1, 0);
+            ImGui.text(warningText1);
+            Utils.imGuiAlignNextItem(warningText2, 0);
+            ImGui.text(warningText2);
+            ImGui.popStyleColor();
         }
 
         String buttonText = saveFilePath == null ? "Select destination file" : saveFilePath.getFileName().toString();
-        Utils.imGuiCenterNextItem(buttonText);
+        Utils.imGuiAlignNextItem(buttonText, 0);
         if(ImGui.button(buttonText)) {
             openSaveFileDialog();
         }
 
+        Utils.imGuiAlignNextItem("Modify config", 0);
         if(ImGui.button("Modify config")) isModifyingConfig = true;
 
-        Utils.imGuiCenterNextItem("Save");
+        ImGui.newLine();
+        ImGui.pushStyleColor(ImGuiCol.Button, 15, 150, 15, 255);
         if(saveFilePath == null) ImGui.beginDisabled();
         if(ImGui.button("Save")) {
             String config = new String(this.config.getData()); // ImString generates the String
@@ -88,8 +98,16 @@ public class AmethystSaveFileGUI extends Dialog {
                 return path;
             });
         }
+        ImGui.popStyleColor();
 
         if(saveFilePath == null) ImGui.endDisabled();
+
+        ImGui.sameLine();
+        Utils.imGuiAlignNextItem("Cancel", 1);
+        ImGui.pushStyleColor(ImGuiCol.Button, 215, 45, 45, 255);
+        if(ImGui.button("Cancel")) disable();
+        ImGui.popStyleColor();
+
         ImGui.end();
 
         if(isModifyingConfig) {
@@ -112,10 +130,10 @@ public class AmethystSaveFileGUI extends Dialog {
     }
 
     private void renderSaveCompleteDialog() {
-        ImGui.setNextWindowSize(80, 60);
+        ImGui.setNextWindowSize(150, 70);
         ImGui.begin("Complete!", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        Utils.imGuiCenterNextItem("Close");
+        Utils.imGuiAlignNextItem("Close", 0);
         if(ImGui.button("Close")) {
             saveFuture = null;
             disable();

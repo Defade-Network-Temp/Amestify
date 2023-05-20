@@ -52,14 +52,24 @@ public class Utils {
         return new float[] {red / 255f, green / 255f, blue / 255f};
     }
 
-    public static void imGuiCenterNextItem(String label) {
+    /**
+     * Set the next item's alignment
+     * @param label The label of the item
+     * @param alignment 0 = center, 1 = right
+     */
+    public static void imGuiAlignNextItem(String label, int alignment) {
         ImGuiStyle style = ImGui.getStyle();
 
         float size = ImGui.calcTextSize(label).x + style.getFramePadding().x * 2.0f;
         float avail = ImGui.getContentRegionAvail().x;
 
-        float off = (avail - size) * 0.5f;
-        if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
+        if (alignment == 0) {
+            float off = (avail - size) * 0.5f;
+            if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
+        } else if (alignment == 1) {
+            float off = avail - size;
+            if (off > 0.0f) ImGui.setCursorPosX(ImGui.getCursorPosX() + off);
+        }
     }
 
     public static void imGuiProgressBar(String text, ProgressTracker progressTracker) {
