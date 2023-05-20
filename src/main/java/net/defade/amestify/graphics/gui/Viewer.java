@@ -78,6 +78,8 @@ public class Viewer {
 
         renderMenuBar();
 
+        if(mapViewerWorld == null) disableView();
+
         uiComponents.values().forEach(UIComponent::render);
 
         renderTooltipInfo();
