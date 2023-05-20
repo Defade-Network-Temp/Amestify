@@ -18,6 +18,10 @@ public class Utils {
         return Math.max(min, Math.min(max, value));
     }
 
+    public static float lerp(float start, float end, float t) {
+        return start + t * (end - start);
+    }
+
     public static Path createAmethystTempFile(String fileName) throws IOException {
         if(!Files.exists(TEMP_DIR) || !Files.isDirectory(TEMP_DIR)) {
             try {

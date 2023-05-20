@@ -13,6 +13,7 @@ uniform mat4 projectionUniform;
 uniform mat4 viewUniform;
 uniform bool displayBiomeColor;
 uniform float highlightedBiome;
+uniform float biomeHighlightColorMultiplier;
 
 out vec3 fragmentColor;
 out vec2 fragmentTexCoords;
@@ -33,7 +34,7 @@ void main() {
         fragmentColor = decodeRGB(vextexColor);
     }
 
-    if(highlightedBiome == vertexBiomeId) fragmentColor *= vec3(0.5, 0.5, 0.5);
+    if(highlightedBiome == vertexBiomeId) fragmentColor *= biomeHighlightColorMultiplier;
 
     fragmentTexCoords = vertexTexCoords;
     fragmentTexId = vertexTexId;

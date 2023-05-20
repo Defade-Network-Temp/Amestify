@@ -6,7 +6,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 public class Camera {
-    private static final float MAX_ZOOM = 45f;
+    public static final float MAX_ZOOM = 45f;
+
     private final Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
     private final Matrix4f inverseProjection;
@@ -30,11 +31,11 @@ public class Camera {
     public void update(float deltaTime) {
         if(resetLerpTime >= 0) {
             resetLerpTime = (float) Utils.clamp(0, 1, resetLerpTime + (deltaTime * 2));
-            setZoom(lerp(zoomLerp, 1, resetLerpTime));
+            setZoom(Utils.lerp(zoomLerp, 1, resetLerpTime));
             adjustProjection();
 
-            float x = lerp(lerpOrigin.x, 0, resetLerpTime);
-            float y = lerp(lerpOrigin.y, 0, resetLerpTime);
+            float x = Utils.lerp(lerpOrigin.x, 0, resetLerpTime);
+            float y = Utils.lerp(lerpOrigin.y, 0, resetLerpTime);
             getPosition().set(x, y);
         }
 
@@ -97,9 +98,5 @@ public class Camera {
 
     public void addZoom(float value) {
         this.zoom = Math.min(zoom + value, MAX_ZOOM);
-    }
-
-    private static float lerp(float start, float end, float t) {
-        return start + t * (end - start);
     }
 }

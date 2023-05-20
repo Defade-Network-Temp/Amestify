@@ -13,6 +13,7 @@ import net.defade.amestify.graphics.gui.dialog.Dialog;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
 import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
+import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.MapViewerRegion;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
@@ -364,6 +365,8 @@ public class Viewer {
         if(mapViewerWorld != null && isMouseInViewport()) {
             Biome highlightedBiome = mapViewerWorld.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
             Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
+            Assets.CHUNK_SHADER.uploadFloat("biomeHighlightColorMultiplier",
+                    Math.max(0.5f, Utils.lerp(0.75f, 0.5f, camera.getZoom() / (Camera.MAX_ZOOM / 3))));
         }
 
         shapeRenderer.addSquare(hoveredBlock.x, hoveredBlock.y, hoveredBlock.x + 1, hoveredBlock.y + 1, 0xAA282828);
