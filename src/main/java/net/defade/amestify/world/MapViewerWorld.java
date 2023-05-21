@@ -139,4 +139,8 @@ public class MapViewerWorld {
     public BiomeColorLayer getBiomeColorLayer() {
         return biomeColorLayer;
     }
+
+    public void dispose() {
+        regionFiles.values().forEach(mapViewerRegion -> mapViewerRegion.getRenderer().stop());
+    }
 }

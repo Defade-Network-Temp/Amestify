@@ -101,6 +101,10 @@ public class Viewer {
     }
 
     public void setMapViewerWorld(MapViewerWorld mapViewerWorld) {
+        if(mapViewerWorld == null && this.mapViewerWorld != null) {
+            this.mapViewerWorld.dispose();
+        }
+
         this.mapViewerWorld = mapViewerWorld;
     }
 
@@ -328,6 +332,7 @@ public class Viewer {
                 selectedRegionOrigin = new Vector2i(hoveredBlock);
             }
         } else if (selectedRegionOrigin != null) {
+            Biome selectedBiome = getUIComponent(BiomeSelectorUI.class).getSelectedBiome();
             int minX = Math.min(selectedRegionOrigin.x, hoveredBlock.x);
             int maxX = Math.max(selectedRegionOrigin.x, hoveredBlock.x);
             int minZ = Math.min(selectedRegionOrigin.y, hoveredBlock.y);
@@ -347,9 +352,9 @@ public class Viewer {
                     int minRegionBlockZ = Math.max(minZ, regionZ * 512);
                     int maxRegionBlockZ = Math.min(maxZ, regionZ * 512 + 511);
 
-                    for (int x = minRegionBlockX; x <= maxRegionBlockX; x++) {
-                        for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z++) {
-                            mapViewerRegion.setBiome(x, z, getUIComponent(BiomeSelectorUI.class).getSelectedBiome());
+                    for (int x = minRegionBlockX; x <= maxRegionBlockX; x += 4) {
+                        for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z += 4) {
+                            mapViewerRegion.setBiome(x, z, selectedBiome);
                         }
                     }
 
@@ -448,7 +453,6 @@ public class Viewer {
         Assets.GRID_SHADER.uploadVec4i("coords", firstX, firstY, endX, endY);
         Assets.GRID_SHADER.uploadInt("xLines", xLines);
         Assets.GRID_SHADER.uploadInt("gridSize", gridSize);
-
 
         glDrawArraysInstanced(GL_LINES, 0, 2, xLines + yLines);
         Assets.GRID_SHADER.detach();

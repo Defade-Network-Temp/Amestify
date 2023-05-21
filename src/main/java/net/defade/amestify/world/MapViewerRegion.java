@@ -29,7 +29,7 @@ public class MapViewerRegion {
         for (int x = 0; x < 32; x++) {
             for (int z = 0; z < 32; z++) {
                 Chunk chunk = regionFile.getChunk(x, z);
-                if(!chunk.isEmpty()) {
+                if(chunk != null && !chunk.isEmpty()) {
                     calculateTexturesForChunk(chunk);
                 }
             }

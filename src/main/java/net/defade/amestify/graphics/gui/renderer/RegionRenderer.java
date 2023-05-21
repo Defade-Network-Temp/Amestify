@@ -3,10 +3,19 @@ package net.defade.amestify.graphics.gui.renderer;
 import net.defade.amestify.graphics.rendering.texture.block.BlockTexture;
 import net.defade.amestify.world.MapViewerRegion;
 import net.defade.amestify.world.biome.Biome;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class RegionRenderer {
+    private static final ExecutorService THREAD_POOL = Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors() - 4), runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(true);
+        return thread;
+    });
+
     private static final int POS_SIZE = 2;
     private static final int COLOR_SIZE = 1;
     private static final int BIOME_ID = 1;
@@ -38,23 +47,33 @@ public class RegionRenderer {
     private boolean buffersInitialized = false;
     private boolean isDirty = false;
 
+    private final AtomicBoolean isBuildingMesh = new AtomicBoolean(false);
+
     public RegionRenderer(MapViewerRegion mapViewerRegion) {
         this.mapViewerRegion = mapViewerRegion;
     }
 
     public void updateMesh() {
-        this.vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
-        squares = 0;
+        if (isBuildingMesh.get()) return;
+        isBuildingMesh.set(true);
 
-        for (int layer = MapViewerRegion.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
-            generateMeshForLayer(layer);
-        }
+        THREAD_POOL.submit(() -> {
+            this.vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
 
-        float[] vertices = new float[squares * 4 * VERTEX_SIZE];
-        System.arraycopy(this.vertices, 0, vertices, 0, vertices.length);
+            int squaresToRender = 0;
+            for (int layer = MapViewerRegion.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
+                squaresToRender += generateMeshForLayer(layer, squaresToRender);
+            }
 
-        this.vertices = vertices;
-        isDirty = true;
+            float[] vertices = new float[squaresToRender * 4 * VERTEX_SIZE];
+            System.arraycopy(this.vertices, 0, vertices, 0, vertices.length);
+
+            this.vertices = vertices;
+            this.squares = squaresToRender;
+
+            isDirty = true;
+            isBuildingMesh.set(false);
+        });
     }
 
     private void initBuffers() {
@@ -112,7 +131,8 @@ public class RegionRenderer {
         glDrawElements(GL_TRIANGLES, squares * 6, GL_UNSIGNED_INT, 0);
     }
 
-    private void generateMeshForLayer(int layer) {
+    private int generateMeshForLayer(int layer, int renderedSquares) {
+        int createdSquares = 0;
         boolean[] isMeshed = new boolean[32 * 32 * 16 * 16];
         for (int x = 0; x < 512; x++) {
             for (int z = 0; z < 512; z++) {
@@ -159,9 +179,12 @@ public class RegionRenderer {
                     }
                 }
 
-                addBlockAtRelativePos(x, z, endX, endZ, texture, biome);
+                addBlockAtRelativePos(renderedSquares + createdSquares, x, z, endX, endZ, texture, biome);
+                createdSquares++;
             }
         }
+
+        return createdSquares;
     }
 
     private BlockTexture getTextureLayer(int x, int z, int layer) {
@@ -172,7 +195,7 @@ public class RegionRenderer {
         return mapViewerRegion.getMapViewerBiome(x, z, layer);
     }
 
-    private void addBlockAtRelativePos(int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
+    private void addBlockAtRelativePos(int renderedSquares, int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
         relativeStartX = mapViewerRegion.getRegionPos().x() * 512 + relativeStartX;
         relativeStartZ = mapViewerRegion.getRegionPos().z() * 512 + relativeStartZ;
         relativeEndX = mapViewerRegion.getRegionPos().x() * 512 + relativeEndX;
@@ -192,7 +215,7 @@ public class RegionRenderer {
         int xPos = relativeStartX * 16;
         int yPos = relativeStartZ * 16;
 
-        int offset = squares * 4 * VERTEX_SIZE;
+        int offset = renderedSquares * 4 * VERTEX_SIZE;
 
         float xAdd = 1;
         float yAdd = 1;
@@ -218,8 +241,6 @@ public class RegionRenderer {
 
             offset += VERTEX_SIZE;
         }
-
-        squares++;
     }
 
     private int[] generateIndices() {

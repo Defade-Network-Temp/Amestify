@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class AnvilMapLoader {
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final ExecutorService executor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors() - 2));
 
     private final Path regionPath;
     private final int minY;
