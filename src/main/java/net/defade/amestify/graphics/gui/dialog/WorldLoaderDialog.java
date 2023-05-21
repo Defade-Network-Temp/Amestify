@@ -37,7 +37,8 @@ public class WorldLoaderDialog extends Dialog {
             }
         }
 
-        if(anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone()) {
+        if(anvilToViewerRegionConverter.getMapViewerWorldFuture() != null && anvilToViewerRegionConverter.getMapViewerWorldFuture().isDone()
+                && !anvilToViewerRegionConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
             viewer.setMapViewerWorld(anvilToViewerRegionConverter.getMapViewerWorldFuture().join());
             disable();
         }

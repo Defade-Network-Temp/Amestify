@@ -32,7 +32,6 @@ public class AnvilMapLoader {
             executor.submit(() -> {
                 try {
                     completableFuture.complete(new AnvilRegionFile(progressTracker, mapViewerWorld, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY));
-                    throw new Exception("fd");
                 } catch (Throwable exception) {
                     completableFuture.completeExceptionally(exception);
                 }
