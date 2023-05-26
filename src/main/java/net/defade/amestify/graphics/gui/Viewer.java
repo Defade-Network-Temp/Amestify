@@ -15,6 +15,7 @@ import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.MapViewerRegion;
+import net.defade.amestify.graphics.gui.dialog.AmethystSaveDatabaseGUI;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
 import net.defade.amestify.graphics.gui.dialog.WorldLoaderDialog;
@@ -64,6 +65,7 @@ public class Viewer {
         dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
         dialogs.put(WorldLoaderDialog.class, new WorldLoaderDialog(this));
         dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
+        dialogs.put(AmethystSaveDatabaseGUI.class, new AmethystSaveDatabaseGUI(this));
     }
 
     public void render(float deltaTime) {
@@ -170,7 +172,9 @@ public class Viewer {
 
                 if(!mongoConnector.isConnected()) ImGui.beginDisabled(true);
                 if(ImGui.menuItem("Save to database")) {
-                    // TODO
+                    if(mapViewerWorld != null) {
+                        getDialog(AmethystSaveDatabaseGUI.class).enable();
+                    }
                 }
                 if(!mongoConnector.isConnected()) {
                     ImGui.endDisabled();

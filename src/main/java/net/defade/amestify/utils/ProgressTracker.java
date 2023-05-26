@@ -1,10 +1,11 @@
 package net.defade.amestify.utils;
 
 public class ProgressTracker {
-    private int total = 0;
-    private int current = 0;
+    private long total = 0;
+    private long current = 0;
+    private String message = null;
 
-    public void reset(int total) {
+    public void reset(long total) {
         this.total = total;
         this.current = 0;
     }
@@ -17,15 +18,23 @@ public class ProgressTracker {
         current += amount;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     public float getProgress() {
         return (float) current / total;
     }
 
-    public int getTotal() {
+    public long getTotal() {
         return total;
     }
 
-    public int getCurrent() {
+    public long getCurrent() {
         return current;
     }
 

@@ -9,8 +9,12 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class MongoConnector {
+    public static final Executor THREAD_POOL = Executors.newFixedThreadPool(2);
+
     private MongoClient mongoClient;
     private MongoDatabase mongoDatabase;
     private boolean isConnected = false;
@@ -19,7 +23,7 @@ public class MongoConnector {
         if(isConnected) disconnect();
 
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-        CompletableFuture.runAsync(() -> {
+        THREAD_POOL.execute(() -> {
             MongoCredential mongoCredential = MongoCredential.createCredential(username, authDatabase, password);
             mongoClient = MongoClients.create(
                     MongoClientSettings.builder().

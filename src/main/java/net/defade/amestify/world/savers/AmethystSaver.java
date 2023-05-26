@@ -27,6 +27,7 @@ public class AmethystSaver {
     private final ReentrantLock fileLock = new ReentrantLock();
     private Path tempFile;
     private RandomAccessFile outputFile;
+    private CompletableFuture<Path> saveFuture;
 
     private MapViewerWorld mapViewerWorld;
 
@@ -36,11 +37,11 @@ public class AmethystSaver {
     public CompletableFuture<Path> saveToTempFile(String worldName, String config, MapViewerWorld mapViewerWorld, ProgressTracker progressTracker) {
         if(tempFile != null) throw new IllegalStateException("Already saving a world.");
 
-        CompletableFuture<Path> saveFuture = new CompletableFuture<>();
+        saveFuture = new CompletableFuture<>();
 
         this.totalChunks.set(0);
         this.mapViewerWorld = mapViewerWorld;
-        progressTracker.reset(mapViewerWorld.getRegions().size() * 32 * 32);
+        progressTracker.reset((long) mapViewerWorld.getRegions().size() * 32 * 32);
 
         try {
             this.tempFile = Utils.createAmethystTempFile(worldName);
@@ -48,7 +49,7 @@ public class AmethystSaver {
 
             writeFileHeader(config);
         } catch (IOException exception) {
-            saveFuture.completeExceptionally(exception);
+            abort(exception);
         }
 
         AnvilMapLoader anvilMapLoader = new AnvilMapLoader(mapViewerWorld.getAnvilWorldPath(), -64, 320); // TODO
@@ -56,11 +57,11 @@ public class AmethystSaver {
             try {
                 writeRegion(regionFile, progressTracker);
             } catch (IOException exception) {
-                saveFuture.completeExceptionally(exception);
+                abort(exception);
             }
         }).whenComplete((unused, throwable) -> {
             if (throwable != null) {
-                saveFuture.completeExceptionally(throwable);
+                abort(throwable);
                 return;
             }
 
@@ -69,7 +70,7 @@ public class AmethystSaver {
                 outputFile.writeInt(totalChunks.get());
                 outputFile.close();
             } catch (IOException exception) {
-                saveFuture.completeExceptionally(exception);
+                abort(exception);
                 return;
             }
 
@@ -101,7 +102,7 @@ public class AmethystSaver {
         for (int x = 0; x < 32; x++) {
             for (int z = 0; z < 32; z++) {
                 Chunk chunk = regionFile.getChunk(x, z);
-                if(chunk.isEmpty()) {
+                if(chunk == null || chunk.isEmpty()) {
                     progressTracker.increment();
                     continue;
                 }
@@ -125,7 +126,7 @@ public class AmethystSaver {
         MapViewerRegion viewerRegionContainingChunk = mapViewerWorld.getRegion(chunk.getChunkPos().x() >> 5, chunk.getChunkPos().z() >> 5);
         for (int x = 0; x < 16; x += 4) {
             for (int z = 0; z < 16; z += 4) {
-                Biome modifiedBiome = viewerRegionContainingChunk.getModifiedBiome(chunk.getChunkPos().x() * 16 + x, chunk.getChunkPos().z() * 16 + z);
+                Biome modifiedBiome = viewerRegionContainingChunk.getModifiedBiome((chunk.getChunkPos().x() * 16 + x) & 0x1FF, (chunk.getChunkPos().z() * 16 + z) & 0x1FF);
                 if(modifiedBiome != null) {
                     for (int y = -64; y < 320; y += 4) {
                         chunk.setBiome(x, y, z, modifiedBiome);
@@ -165,6 +166,19 @@ public class AmethystSaver {
         totalChunks.getAndIncrement();
 
         return byteArrayOutputStream.toByteArray();
+    }
+
+    private void abort(Throwable throwable) {
+        if(tempFile == null) return;
+
+        try {
+            outputFile.close();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+        tempFile = null;
+
+        saveFuture.completeExceptionally(throwable);
     }
 
     private static void savePalette(AdaptivePalette palette, DataOutputStream dataOutputStream) throws IOException {

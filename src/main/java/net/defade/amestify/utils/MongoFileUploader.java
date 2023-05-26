@@ -3,48 +3,65 @@ package net.defade.amestify.utils;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.GridFSUploadStream;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import com.mongodb.client.model.Filters;
 import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.graphics.gui.Viewer;
 import org.bson.BsonString;
 import org.bson.Document;
-import javax.swing.JOptionPane;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class MongoFileUploader {
-    private final MongoConnector mongoConnector;
+    private final Viewer viewer;
 
-    public MongoFileUploader(MongoConnector mongoConnector) {
-        this.mongoConnector = mongoConnector;
+    public MongoFileUploader(Viewer viewer) {
+        this.viewer = viewer;
     }
 
-    public void sendFile(Path amethystFilePath, String fileName, String fileId, String miniGameName) throws IOException {
-        GridFSBucket gridFSBucket = GridFSBuckets.create(mongoConnector.getMongoDatabase(), "maps");
+    public CompletableFuture<Void> uploadFile(Path amethystFilePath, String fileName, String fileId, String miniGameName, ProgressTracker progressTracker) {
+        CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
-        GridFSUploadOptions options = new GridFSUploadOptions()
-                .chunkSizeBytes(4 * 1024) // 4ko chunks size
-                .metadata(new Document("game", miniGameName));
+        MongoConnector.THREAD_POOL.execute(() -> {
+            try {
+                GridFSBucket gridFSBucket = GridFSBuckets.create(viewer.getMongoConnector().getMongoDatabase(), "maps");
+                gridFSBucket.find(Filters.eq("filename", fileName)).forEach((Consumer<? super GridFSFile>) document -> gridFSBucket.delete(document.getId()));
 
-        GridFSUploadStream gridFSUploadStream = gridFSBucket.openUploadStream(new BsonString(fileId), fileName, options);
-        InputStream fileInputStream = Files.newInputStream(amethystFilePath);
+                GridFSUploadOptions options = new GridFSUploadOptions()
+                        .chunkSizeBytes(128 * 1024) // 128ko chunks size
+                        .metadata(new Document("game", miniGameName));
 
-        byte[] buffer = new byte[4 * 1024]; // 4ko chunks size
-        int length;
-        long fileLength = Files.size(amethystFilePath);
+                GridFSUploadStream gridFSUploadStream = gridFSBucket.openUploadStream(new BsonString(fileId), fileName, options);
+                InputStream fileInputStream = Files.newInputStream(amethystFilePath);
 
-        long sentBytes = 0;
+                byte[] buffer = new byte[128 * 1024]; // 128ko chunks size
+                long fileLength = Files.size(amethystFilePath);
+                progressTracker.reset(fileLength);
 
-        while ((length = fileInputStream.read(buffer)) != -1) {
-            sentBytes += length;
-            gridFSUploadStream.write(buffer, 0, length);
-        }
+                long totalSent = 0;
+                int length;
+                while ((length = fileInputStream.read(buffer)) != -1) {
+                    gridFSUploadStream.write(buffer, 0, length);
+                    totalSent += length;
 
-        JOptionPane.showMessageDialog(null, "Successfully converted the anvil world!", "Finished", JOptionPane.INFORMATION_MESSAGE);
+                    progressTracker.increment(length);
+                    progressTracker.setMessage(convertUnit(totalSent) + "/" + convertUnit(fileLength) + " (" + Math.round(totalSent / (double) fileLength * 100) + "%)");
+                }
 
-        gridFSUploadStream.flush();
-        gridFSUploadStream.close();
+                gridFSUploadStream.flush();
+                gridFSUploadStream.close();
+
+                completableFuture.complete(null);
+            } catch (Exception exception) {
+                completableFuture.completeExceptionally(exception);
+            }
+        });
+
+        return completableFuture;
     }
 
     private static String convertUnit(long bytes) {
