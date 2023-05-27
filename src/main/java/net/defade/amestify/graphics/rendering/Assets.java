@@ -1,6 +1,7 @@
 package net.defade.amestify.graphics.rendering;
 
 import net.defade.amestify.graphics.rendering.texture.BiomeTexture;
+import net.defade.amestify.graphics.rendering.texture.Texture;
 import net.defade.amestify.graphics.rendering.texture.block.BlockSheet;
 import net.defade.amestify.graphics.rendering.texture.block.generator.BlockTextureData;
 import net.defade.amestify.graphics.rendering.texture.block.generator.BlockTextureMap;
@@ -21,6 +22,9 @@ public class Assets {
     public static Shader GRID_SHADER;
     public static Shader SHAPE_SHADER;
 
+    public static Texture EDIT_ICON;
+    public static Texture DONE_ICON;
+
     public static void init() throws IOException {
         Block.init();
         BiomeTexture.init();
@@ -36,6 +40,9 @@ public class Assets {
 
         SHAPE_SHADER = new Shader("shape-shader.glsl");
         SHAPE_SHADER.init();
+
+        EDIT_ICON = new Texture(Paths.get("gui", "edit.png"));
+        DONE_ICON = new Texture(Paths.get("gui", "done.png"));
     }
 
     // Java can't list files inside the JAR, so we copy them to a temp folder.

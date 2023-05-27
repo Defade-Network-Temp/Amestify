@@ -12,6 +12,7 @@ import net.defade.amestify.database.MongoConnector;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
 import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
+import net.defade.amestify.graphics.gui.window.DatabaseMapUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.MapViewerRegion;
@@ -61,6 +62,7 @@ public class Viewer {
     public Viewer() {
         uiComponents.put(BiomeCreatorUI.class, new BiomeCreatorUI(this));
         uiComponents.put(BiomeSelectorUI.class, new BiomeSelectorUI(this));
+        uiComponents.put(DatabaseMapUI.class, new DatabaseMapUI(this));
 
         dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
         dialogs.put(WorldLoaderDialog.class, new WorldLoaderDialog(this));
