@@ -7,6 +7,7 @@ import imgui.flag.ImGuiHoveredFlags;
 import imgui.flag.ImGuiStyleVar;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
+import imgui.type.ImString;
 import net.defade.amestify.control.MouseListener;
 import net.defade.amestify.database.MongoConnector;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
@@ -16,6 +17,7 @@ import net.defade.amestify.graphics.gui.window.DatabaseMapUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.viewer.MapViewerRegion;
+import net.defade.amestify.graphics.gui.dialog.AmethystLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveDatabaseGUI;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
@@ -58,6 +60,7 @@ public class Viewer {
     private boolean isViewDisabled = false;
 
     private MapViewerWorld mapViewerWorld;
+    private final ImString worldConfig = new ImString("", 16384);
 
     public Viewer() {
         uiComponents.put(BiomeCreatorUI.class, new BiomeCreatorUI(this));
@@ -66,6 +69,7 @@ public class Viewer {
 
         dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
         dialogs.put(AnvilLoaderDialog.class, new AnvilLoaderDialog(this));
+        dialogs.put(AmethystLoaderDialog.class, new AmethystLoaderDialog(this));
         dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
         dialogs.put(AmethystSaveDatabaseGUI.class, new AmethystSaveDatabaseGUI(this));
     }
@@ -104,6 +108,10 @@ public class Viewer {
         return mapViewerWorld;
     }
 
+    public ImString getWorldConfig() {
+        return worldConfig;
+    }
+
     public void setMapViewerWorld(MapViewerWorld mapViewerWorld) {
         if(mapViewerWorld == null && this.mapViewerWorld != null) {
             this.mapViewerWorld.dispose();
@@ -112,7 +120,7 @@ public class Viewer {
         this.mapViewerWorld = mapViewerWorld;
     }
 
-    private <T extends UIComponent> T getUIComponent(Class<T> clazz) {
+    public  <T extends UIComponent> T getUIComponent(Class<T> clazz) {
         UIComponent uiComponent = uiComponents.get(clazz);
         if(uiComponent == null) {
             throw new RuntimeException("UIComponent " + clazz.getName() + " is not registered");
@@ -162,6 +170,9 @@ public class Viewer {
             if(ImGui.beginMenu("File")) {
                 if(ImGui.menuItem("Open anvil world")) {
                     getDialog(AnvilLoaderDialog.class).enable();
+                }
+                if(ImGui.menuItem("Open amethyst world")) {
+                    getDialog(AmethystLoaderDialog.class).enable();
                 }
                 ImGui.endMenu();
             }

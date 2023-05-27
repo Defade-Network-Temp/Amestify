@@ -22,7 +22,6 @@ public class AmethystSaveDatabaseGUI extends Dialog {
     private final AmethystSaver amethystSaver = new AmethystSaver();
     private final MongoFileUploader mongoFileUploader;
 
-    private final ImString config = new ImString();
     private boolean isModifyingConfig = false;
 
     private final ImString worldName = new ImString("", 255);
@@ -109,7 +108,7 @@ public class AmethystSaveDatabaseGUI extends Dialog {
         if(isModifyingConfig) {
             ImGui.begin("Config", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
             if (ImGui.button("Close", 80, 0)) isModifyingConfig = false;
-            ImGui.inputTextMultiline("##Config", config, -1, -1, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue);
+            ImGui.inputTextMultiline("##Config", viewer.getWorldConfig(), -1, -1, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue);
             ImGui.end();
         }
     }
@@ -139,7 +138,7 @@ public class AmethystSaveDatabaseGUI extends Dialog {
     private void save() {
         confirmationPopup = false;
         fileExists = null;
-        saveFuture = amethystSaver.saveToTempFile(worldName.get(), config.get(), viewer.getMapViewerWorld(), progressTracker);
+        saveFuture = amethystSaver.saveToTempFile(worldName.get(), viewer.getWorldConfig().get(), viewer.getMapViewerWorld(), progressTracker);
         saveFuture.thenAccept(path -> {
             uploadFuture = mongoFileUploader.uploadFile(path, worldName.get() + ".amethyst", worldName.get(), game.get(), progressTracker);
         });

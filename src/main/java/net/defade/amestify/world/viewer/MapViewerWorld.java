@@ -100,6 +100,16 @@ public class MapViewerWorld {
         return null;
     }
 
+    public Biome getBiomeByName(NamespaceID name) {
+        for (Biome biome : unmodifiableBiomeCollection()) {
+            if(biome.name().equals(name)) {
+                return biome;
+            }
+        }
+
+        return null;
+    }
+
     public Biome getBiomeById(int id) {
         return biomes.get(id);
     }

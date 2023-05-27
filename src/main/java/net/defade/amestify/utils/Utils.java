@@ -93,4 +93,16 @@ public class Utils {
         );
         ImGui.text(text);
     }
+
+    public static long getChunkIndex(int chunkX, int chunkZ) {
+        return (((long) chunkX) << 32) | (chunkZ & 0xffffffffL);
+    }
+
+    public static int getChunkCoordX(long index) {
+        return (int) (index >> 32);
+    }
+
+    public static int getChunkCoordZ(long index) {
+        return (int) index;
+    }
 }

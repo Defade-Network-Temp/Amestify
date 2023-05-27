@@ -4,7 +4,6 @@ import imgui.ImGui;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiWindowFlags;
-import imgui.type.ImString;
 import net.defade.amestify.graphics.gui.Viewer;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.utils.Utils;
@@ -24,7 +23,6 @@ public class AmethystSaveFileGUI extends Dialog {
     private final AmethystSaver amethystSaver = new AmethystSaver();
 
     private Path saveFilePath;
-    private final ImString config = new ImString();
     private boolean isModifyingConfig = false;
 
     private final ProgressTracker progressTracker = new ProgressTracker();
@@ -80,7 +78,7 @@ public class AmethystSaveFileGUI extends Dialog {
         ImGui.pushStyleColor(ImGuiCol.Button, 15, 150, 15, 255);
         if(saveFilePath == null) ImGui.beginDisabled();
         if(ImGui.button("Save")) {
-            String config = new String(this.config.getData()); // ImString generates the String
+            String config = new String(viewer.getWorldConfig().getData()); // ImString generates the String
             // when the dirty flag is set to true, but the text dialog doesn't update this flag,
             // so we can't just get the String from the ImString#get() method...
 
@@ -113,7 +111,7 @@ public class AmethystSaveFileGUI extends Dialog {
         if(isModifyingConfig) {
             ImGui.begin("Config", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
             if (ImGui.button("Close", 80, 0)) isModifyingConfig = false;
-            ImGui.inputTextMultiline("##Config", config, -1, -1, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue);
+            ImGui.inputTextMultiline("##Config", viewer.getWorldConfig(), -1, -1, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue);
             ImGui.end();
         }
     }

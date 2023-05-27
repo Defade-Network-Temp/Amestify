@@ -3,6 +3,7 @@ package net.defade.amestify.world;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.loaders.WorldLoader;
+import net.defade.amestify.world.pos.ChunkPos;
 import net.defade.amestify.world.pos.RegionPos;
 import net.defade.amestify.world.viewer.MapViewerRegion;
 import net.defade.amestify.world.viewer.MapViewerWorld;
@@ -38,5 +39,13 @@ public interface RegionFile {
         });
 
         return mapViewerWorldFuture;
+    }
+
+    static int getChunkIndex(int x, int z) {
+        return (x & 0x1F) + ((z & 0x1F) << 5);
+    }
+
+    static ChunkPos getChunkPosFromIndex(int index) {
+        return new ChunkPos(index & 0x1F, index >> 5);
     }
 }

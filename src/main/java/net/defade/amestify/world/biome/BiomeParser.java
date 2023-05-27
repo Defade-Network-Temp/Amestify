@@ -1,6 +1,9 @@
 package net.defade.amestify.world.biome;
 
+import net.defade.amestify.utils.NamespaceID;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +25,30 @@ public class BiomeParser {
         writeSizedString(biome.temperatureModifier().toString(), dataOutputStream);
 
         return byteArrayOutputStream.toByteArray();
+    }
+
+    public static Biome decode(byte[] biome) throws IOException {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(biome);
+        DataInputStream dataInputStream = new DataInputStream(byteArrayInputStream);
+
+        NamespaceID name = NamespaceID.from(readSizedString(dataInputStream), readSizedString(dataInputStream));
+
+        float temperature = dataInputStream.readFloat();
+        float downfall = dataInputStream.readFloat();
+
+        BiomeEffects biomeEffects = readBiomeEffects(dataInputStream);
+
+        Biome.Precipitation precipitation = Biome.Precipitation.valueOf(readSizedString(dataInputStream));
+        Biome.TemperatureModifier temperatureModifier = Biome.TemperatureModifier.valueOf(readSizedString(dataInputStream));
+
+        return Biome.builder()
+                .name(name)
+                .temperature(temperature)
+                .downfall(downfall)
+                .effects(biomeEffects)
+                .precipitation(precipitation)
+                .temperatureModifier(temperatureModifier)
+                .build();
     }
 
     private static void writeBiomeEffects(BiomeEffects biomeEffect, DataOutputStream dataOutputStream) throws IOException {
@@ -64,6 +91,47 @@ public class BiomeParser {
         }
     }
 
+    private static BiomeEffects readBiomeEffects(DataInputStream dataInputStream) throws IOException {
+        int fogColor = dataInputStream.readInt();
+        int skyColor = dataInputStream.readInt();
+        int waterColor = dataInputStream.readInt();
+        int waterFogColor = dataInputStream.readInt();
+        int foliageColor = dataInputStream.readInt();
+        int grassColor = dataInputStream.readInt();
+
+        BiomeEffects.GrassColorModifier grassColorModifier = null;
+        if(dataInputStream.readBoolean()) {
+            grassColorModifier = BiomeEffects.GrassColorModifier.valueOf(readSizedString(dataInputStream));
+        }
+
+        BiomeParticle biomeParticle = null;
+        if(dataInputStream.readBoolean()) {
+            biomeParticle = readBiomeParticle(dataInputStream);
+        }
+
+        NamespaceID ambientSound = null;
+        if(dataInputStream.readBoolean()) {
+            ambientSound = NamespaceID.from(readSizedString(dataInputStream), readSizedString(dataInputStream));
+        }
+
+        BiomeEffects.MoodSound moodSound = null;
+        if(dataInputStream.readBoolean()) {
+            moodSound = readMoodSound(dataInputStream);
+        }
+
+        BiomeEffects.AdditionsSound additionsSound = null;
+        if(dataInputStream.readBoolean()) {
+            additionsSound = readAdditionsSound(dataInputStream);
+        }
+
+        BiomeEffects.Music music = null;
+        if(dataInputStream.readBoolean()) {
+            music = readMusic(dataInputStream);
+        }
+
+        return new BiomeEffects(fogColor, skyColor, waterColor, waterFogColor, foliageColor, grassColor, grassColorModifier, biomeParticle, ambientSound, moodSound, additionsSound, music);
+    }
+
     private static void writeBiomeParticle(BiomeParticle biomeParticle, DataOutputStream dataOutputStream) throws IOException {
         dataOutputStream.writeFloat(biomeParticle.probability());
 
@@ -81,6 +149,29 @@ public class BiomeParser {
         }
     }
 
+    private static BiomeParticle readBiomeParticle(DataInputStream dataInputStream) throws IOException {
+        float probability = dataInputStream.readFloat();
+        BiomeParticle.Option option = null;
+
+        byte optionType = dataInputStream.readByte();
+        switch (optionType) {
+            case 0 -> option = new BiomeParticle.BlockOption(dataInputStream.readShort());
+
+            case 1 -> {
+                float red, green, blue, scale;
+
+                red = dataInputStream.readFloat();
+                green = dataInputStream.readFloat();
+                blue = dataInputStream.readFloat();
+                scale = dataInputStream.readFloat();
+
+                option = new BiomeParticle.DustOption(red, green, blue, scale);
+            }
+        }
+
+        return new BiomeParticle(probability, option);
+    }
+
     private static void writeMoodSound(BiomeEffects.MoodSound moodSound, DataOutputStream dataOutputStream) throws IOException {
         writeSizedString(moodSound.sound().domain(), dataOutputStream);
         writeSizedString(moodSound.sound().path(), dataOutputStream);
@@ -90,11 +181,28 @@ public class BiomeParser {
         dataOutputStream.writeDouble(moodSound.offset());
     }
 
+    private static BiomeEffects.MoodSound readMoodSound(DataInputStream dataInputStream) throws IOException {
+        NamespaceID sound = NamespaceID.from(readSizedString(dataInputStream), readSizedString(dataInputStream));
+
+        int tickDelay = dataInputStream.readInt();
+        int blockSearchExtent = dataInputStream.readInt();
+        double offset = dataInputStream.readDouble();
+
+        return new BiomeEffects.MoodSound(sound, tickDelay, blockSearchExtent, offset);
+    }
+
     private static void writeAdditionsSound(BiomeEffects.AdditionsSound additionsSound, DataOutputStream dataOutputStream) throws IOException {
         writeSizedString(additionsSound.sound().domain(), dataOutputStream);
         writeSizedString(additionsSound.sound().path(), dataOutputStream);
 
         dataOutputStream.writeDouble(additionsSound.tickChance());
+    }
+
+    private static BiomeEffects.AdditionsSound readAdditionsSound(DataInputStream dataInputStream) throws IOException {
+        NamespaceID sound = NamespaceID.from(readSizedString(dataInputStream), readSizedString(dataInputStream));
+        double tickChance = dataInputStream.readDouble();
+
+        return new BiomeEffects.AdditionsSound(sound, tickChance);
     }
 
     private static void writeMusic(BiomeEffects.Music music, DataOutputStream dataOutputStream) throws IOException {
@@ -104,6 +212,16 @@ public class BiomeParser {
         dataOutputStream.writeInt(music.minDelay());
         dataOutputStream.writeInt(music.maxDelay());
         dataOutputStream.writeBoolean(music.replaceCurrentMusic());
+    }
+
+    private static BiomeEffects.Music readMusic(DataInputStream dataInputStream) throws IOException {
+        NamespaceID sound = NamespaceID.from(readSizedString(dataInputStream), readSizedString(dataInputStream));
+
+        int minDelay = dataInputStream.readInt();
+        int maxDelay = dataInputStream.readInt();
+        boolean replaceCurrentMusic = dataInputStream.readBoolean();
+
+        return new BiomeEffects.Music(sound, minDelay, maxDelay, replaceCurrentMusic);
     }
 
     private static void writeVarInt(int value, DataOutputStream dataOutputStream) throws IOException {
@@ -120,9 +238,37 @@ public class BiomeParser {
         }
     }
 
+    private static int readVarInt(DataInputStream dataInputStream) throws IOException {
+        int value = 0;
+        int position = 0;
+        byte currentByte;
+
+        while (true) {
+            currentByte = dataInputStream.readByte();
+            value |= (currentByte & 0x7F) << position;
+
+            if ((currentByte & 0x80) == 0) break;
+
+            position += 7;
+
+            if (position >= 32) throw new RuntimeException("VarInt is too big");
+        }
+
+        return value;
+    }
+
+
     private static void writeSizedString(String string, DataOutputStream dataOutputStream) throws IOException {
         byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
         writeVarInt(bytes.length, dataOutputStream);
         dataOutputStream.write(bytes);
+    }
+
+    private static String readSizedString(DataInputStream dataInputStream) throws IOException {
+        int length = readVarInt(dataInputStream);
+        byte[] bytes = new byte[length];
+        dataInputStream.readFully(bytes);
+
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }

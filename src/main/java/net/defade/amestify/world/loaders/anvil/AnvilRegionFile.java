@@ -3,7 +3,6 @@ package net.defade.amestify.world.loaders.anvil;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.viewer.MapViewerWorld;
-import net.defade.amestify.world.pos.ChunkPos;
 import net.defade.amestify.world.pos.RegionPos;
 import net.defade.amestify.world.RegionFile;
 import net.querz.mca.CompressionType;
@@ -35,7 +34,7 @@ public class AnvilRegionFile implements RegionFile {
 
     @Override
     public Chunk getChunk(int x, int z) {
-        return chunks[getChunkIndex(x, z)];
+        return chunks[RegionFile.getChunkIndex(x, z)];
     }
 
     @Override
@@ -68,7 +67,7 @@ public class AnvilRegionFile implements RegionFile {
 
             Chunk chunk = new AnvilChunk(
                     mapViewerWorld,
-                    getChunkPosFromIndex(i).add(regionPos.x() * 32, regionPos.z() * 32),
+                    RegionFile.getChunkPosFromIndex(i).add(regionPos.x() * 32, regionPos.z() * 32),
                     minY, maxY, // TODO minY and maxY
                     compressionType, chunkInputStream
             );
@@ -80,13 +79,5 @@ public class AnvilRegionFile implements RegionFile {
         }
 
         regionFile.close();
-    }
-
-    private static int getChunkIndex(int x, int z) {
-        return (x & 0x1F) + ((z & 0x1F) << 5);
-    }
-
-    private static ChunkPos getChunkPosFromIndex(int index) {
-        return new ChunkPos(index & 0x1F, index >> 5);
     }
 }
