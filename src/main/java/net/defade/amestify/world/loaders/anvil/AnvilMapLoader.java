@@ -1,22 +1,20 @@
 package net.defade.amestify.world.loaders.anvil;
 
 import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.MapViewerWorld;
-import net.defade.amestify.world.chunk.pos.RegionPos;
+import net.defade.amestify.world.RegionFile;
+import net.defade.amestify.world.loaders.WorldLoader;
+import net.defade.amestify.world.viewer.MapViewerWorld;
+import net.defade.amestify.world.pos.RegionPos;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class AnvilMapLoader {
-    private final ExecutorService executor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors() - 2));
-
+public class AnvilMapLoader implements WorldLoader {
     private final Path regionPath;
     private final int minY;
     private final int maxY;
@@ -29,7 +27,7 @@ public class AnvilMapLoader {
 
     private CompletableFuture<AnvilRegionFile> loadRegion(MapViewerWorld mapViewerWorld, RegionPos regionPos, ProgressTracker progressTracker) {
         CompletableFuture<AnvilRegionFile> completableFuture = new CompletableFuture<>();
-            executor.submit(() -> {
+            THREAD_POOL.submit(() -> {
                 try {
                     completableFuture.complete(new AnvilRegionFile(progressTracker, mapViewerWorld, regionPath.resolve("r." + regionPos.x() + "." + regionPos.z() + ".mca"), regionPos, minY, maxY));
                 } catch (Throwable exception) {
@@ -41,7 +39,8 @@ public class AnvilMapLoader {
         return completableFuture;
     }
 
-    public CompletableFuture<Void> loadRegions(ProgressTracker progressTracker, MapViewerWorld mapViewerWorld, Consumer<AnvilRegionFile> consumer) {
+    @Override
+    public CompletableFuture<Void> loadRegions(ProgressTracker progressTracker, MapViewerWorld mapViewerWorld, Consumer<RegionFile> consumer) {
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
         CompletableFuture.runAsync(() -> {
@@ -65,7 +64,6 @@ public class AnvilMapLoader {
                     loadingFutures.add(loadRegion(mapViewerWorld, new RegionPos(regionX, regionZ), progressTracker).whenComplete((region, throwable) -> {
                         if(throwable != null) {
                             completableFuture.completeExceptionally(throwable);
-                            executor.shutdownNow();
                             return;
                         }
 
@@ -76,10 +74,8 @@ public class AnvilMapLoader {
                 CompletableFuture.allOf(loadingFutures.toArray(new CompletableFuture[0])).whenComplete((unused, throwable) -> {
                     if (throwable != null) {
                         completableFuture.completeExceptionally(throwable);
-                        executor.shutdownNow();
                     } else {
                         completableFuture.complete(null);
-                        executor.shutdown();
                     }
                 });
             } catch (Throwable exception) {

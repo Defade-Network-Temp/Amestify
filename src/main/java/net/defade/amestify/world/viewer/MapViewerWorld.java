@@ -1,4 +1,4 @@
-package net.defade.amestify.world;
+package net.defade.amestify.world.viewer;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -7,25 +7,25 @@ import net.defade.amestify.graphics.rendering.BiomeColorLayer;
 import net.defade.amestify.utils.NamespaceID;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeEffects;
-import net.defade.amestify.world.chunk.pos.RegionPos;
+import net.defade.amestify.world.loaders.WorldLoader;
+import net.defade.amestify.world.pos.RegionPos;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MapViewerWorld {
-    private final Path anvilWorldPath;
+    private final WorldLoader worldLoader;
     private final Map<Integer, Biome> biomes = new HashMap<>();
     private final BiomeColorLayer biomeColorLayer = new BiomeColorLayer();
     private final Biome plainsBiome;
 
     private final Map<RegionPos, MapViewerRegion> regionFiles = new HashMap<>();
 
-    public MapViewerWorld(Path anvilWorldPath) throws FileNotFoundException {
-        this.anvilWorldPath = anvilWorldPath;
+    public MapViewerWorld(WorldLoader worldLoader) throws FileNotFoundException {
+        this.worldLoader = worldLoader;
         Biome.resetCounter();
 
         InputStream biomesJsonInputStream = Main.class.getClassLoader().getResourceAsStream("biomes.json");
@@ -82,8 +82,8 @@ public class MapViewerWorld {
         plainsBiome = plains;
     }
 
-    public Path getAnvilWorldPath() {
-        return anvilWorldPath;
+    public WorldLoader getWorldLoader() {
+        return worldLoader;
     }
 
     public Biome getPlainsBiome() {

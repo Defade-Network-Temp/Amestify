@@ -1,4 +1,4 @@
-package net.defade.amestify.world.palette;
+package net.defade.amestify.world.chunk.palette;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;

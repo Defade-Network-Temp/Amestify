@@ -1,7 +1,7 @@
-package net.defade.amestify.world.loaders;
+package net.defade.amestify.world;
 
 import net.defade.amestify.world.chunk.Chunk;
-import net.defade.amestify.world.chunk.pos.RegionPos;
+import net.defade.amestify.world.pos.RegionPos;
 
 public interface RegionFile {
     RegionPos getRegionPos();

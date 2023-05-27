@@ -1,4 +1,4 @@
-package net.defade.amestify.world.chunk.pos;
+package net.defade.amestify.world.pos;
 
 public record ChunkPos(int x, int z) {
     public long getChunkIndex() {

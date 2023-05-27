@@ -1,18 +1,18 @@
 package net.defade.amestify.world.savers;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.defade.amestify.world.MapViewerRegion;
+import net.defade.amestify.world.chunk.Chunk;
+import net.defade.amestify.world.loaders.WorldLoader;
+import net.defade.amestify.world.viewer.MapViewerRegion;
 import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.utils.Utils;
-import net.defade.amestify.world.MapViewerWorld;
+import net.defade.amestify.world.viewer.MapViewerWorld;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.biome.BiomeParser;
-import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.Section;
-import net.defade.amestify.world.loaders.RegionFile;
-import net.defade.amestify.world.loaders.anvil.AnvilMapLoader;
-import net.defade.amestify.world.palette.AdaptivePalette;
-import net.defade.amestify.world.palette.FlexiblePalette;
+import net.defade.amestify.world.RegionFile;
+import net.defade.amestify.world.chunk.palette.AdaptivePalette;
+import net.defade.amestify.world.chunk.palette.FlexiblePalette;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -52,8 +52,8 @@ public class AmethystSaver {
             abort(exception);
         }
 
-        AnvilMapLoader anvilMapLoader = new AnvilMapLoader(mapViewerWorld.getAnvilWorldPath(), -64, 320); // TODO
-        anvilMapLoader.loadRegions(null, mapViewerWorld, regionFile -> {
+        WorldLoader worldLoader = mapViewerWorld.getWorldLoader();
+        worldLoader.loadRegions(null, mapViewerWorld, regionFile -> {
             try {
                 writeRegion(regionFile, progressTracker);
             } catch (IOException exception) {

@@ -1,7 +1,7 @@
 package net.defade.amestify.graphics.gui.renderer;
 
 import net.defade.amestify.graphics.rendering.texture.block.BlockTexture;
-import net.defade.amestify.world.MapViewerRegion;
+import net.defade.amestify.world.viewer.MapViewerRegion;
 import net.defade.amestify.world.biome.Biome;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

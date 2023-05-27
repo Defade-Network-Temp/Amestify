@@ -1,30 +1,28 @@
-package net.defade.amestify.world;
+package net.defade.amestify.world.loaders;
 
 import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.loaders.anvil.AnvilMapLoader;
+import net.defade.amestify.world.viewer.MapViewerRegion;
+import net.defade.amestify.world.viewer.MapViewerWorld;
 import java.io.FileNotFoundException;
-import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-public class AnvilToViewerRegionConverter {
+public class RegionToViewerConverter {
     private final ProgressTracker progressTracker = new ProgressTracker();
     private CompletableFuture<MapViewerWorld> mapViewerWorldFuture;
 
     private MapViewerWorld mapViewerWorld;
 
-    public void convert(Path worldPath) {
+    public void convert(WorldLoader worldLoader) {
         this.mapViewerWorldFuture = new CompletableFuture<>();
         try {
-            this.mapViewerWorld = new MapViewerWorld(worldPath);
+            this.mapViewerWorld = new MapViewerWorld(worldLoader);
         } catch (FileNotFoundException exception) {
             mapViewerWorldFuture.completeExceptionally(exception);
             return;
         }
 
-        AnvilMapLoader anvilMapLoader = new AnvilMapLoader(worldPath, -64, 320);
-
-        anvilMapLoader.loadRegions(progressTracker, mapViewerWorld, anvilRegionFile -> {
-            mapViewerWorld.addRegion(new MapViewerRegion(anvilRegionFile, mapViewerWorld.getPlainsBiome()));
+        worldLoader.loadRegions(progressTracker, mapViewerWorld, regionFile -> {
+            mapViewerWorld.addRegion(new MapViewerRegion(regionFile, mapViewerWorld.getPlainsBiome()));
         }).whenComplete((unused, throwable) -> {
             if(throwable != null) {
                 mapViewerWorldFuture.completeExceptionally(throwable);

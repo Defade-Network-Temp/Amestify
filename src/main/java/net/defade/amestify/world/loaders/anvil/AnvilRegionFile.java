@@ -1,11 +1,11 @@
 package net.defade.amestify.world.loaders.anvil;
 
 import net.defade.amestify.utils.ProgressTracker;
-import net.defade.amestify.world.MapViewerWorld;
 import net.defade.amestify.world.chunk.Chunk;
-import net.defade.amestify.world.chunk.pos.ChunkPos;
-import net.defade.amestify.world.chunk.pos.RegionPos;
-import net.defade.amestify.world.loaders.RegionFile;
+import net.defade.amestify.world.viewer.MapViewerWorld;
+import net.defade.amestify.world.pos.ChunkPos;
+import net.defade.amestify.world.pos.RegionPos;
+import net.defade.amestify.world.RegionFile;
 import net.querz.mca.CompressionType;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class AnvilRegionFile implements RegionFile {
             InputStream chunkInputStream = new FileInputStream(regionFile.getFD());
             CompressionType compressionType = CompressionType.getFromID(compressionScheme);
 
-            Chunk chunk = new Chunk(
+            Chunk chunk = new AnvilChunk(
                     mapViewerWorld,
                     getChunkPosFromIndex(i).add(regionPos.x() * 32, regionPos.z() * 32),
                     minY, maxY, // TODO minY and maxY

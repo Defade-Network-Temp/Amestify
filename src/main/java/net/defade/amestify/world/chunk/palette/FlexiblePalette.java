@@ -1,4 +1,4 @@
-package net.defade.amestify.world.palette;
+package net.defade.amestify.world.chunk.palette;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

@@ -1,4 +1,4 @@
-package net.defade.amestify.world.palette;
+package net.defade.amestify.world.chunk.palette;
 
 public class FilledPalette implements Palette {
     private final byte dimension;

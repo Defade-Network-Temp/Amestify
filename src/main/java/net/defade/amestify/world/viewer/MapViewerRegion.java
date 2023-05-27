@@ -1,12 +1,12 @@
-package net.defade.amestify.world;
+package net.defade.amestify.world.viewer;
 
 import net.defade.amestify.graphics.rendering.Assets;
 import net.defade.amestify.graphics.gui.renderer.RegionRenderer;
 import net.defade.amestify.graphics.rendering.texture.block.BlockTexture;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.chunk.Chunk;
-import net.defade.amestify.world.chunk.pos.RegionPos;
-import net.defade.amestify.world.loaders.RegionFile;
+import net.defade.amestify.world.pos.RegionPos;
+import net.defade.amestify.world.RegionFile;
 
 public class MapViewerRegion {
     public static final int TEXTURES_DEPTH = 3;

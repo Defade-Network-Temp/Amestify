@@ -1,6 +1,6 @@
 package net.defade.amestify.world.chunk;
 
-import net.defade.amestify.world.palette.AdaptivePalette;
+import net.defade.amestify.world.chunk.palette.AdaptivePalette;
 
 public class Section {
     private final AdaptivePalette blockPalette;
