@@ -90,7 +90,7 @@ public class AmethystSaveDatabaseGUI extends Dialog {
         ImGui.sameLine();
         if(ImGui.button("Modify config")) isModifyingConfig = true;
 
-        ImGui.inputTextWithHint("##Game", "Game", game, ImGuiInputTextFlags.EnterReturnsTrue);
+        ImGui.inputTextWithHint("##Game", "Game", game);
         ImGui.sameLine();
         ImGui.pushStyleColor(ImGuiCol.Button, 15, 150, 15, 255);
         if(ImGui.button("Save")) {
