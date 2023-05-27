@@ -4,8 +4,9 @@ import imgui.ImGui;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
 import net.defade.amestify.graphics.gui.Viewer;
+import net.defade.amestify.utils.ProgressTracker;
 import net.defade.amestify.utils.Utils;
-import net.defade.amestify.world.loaders.RegionToViewerConverter;
+import net.defade.amestify.world.RegionFile;
 import net.defade.amestify.world.loaders.anvil.AnvilMapLoader;
 import net.defade.amestify.world.viewer.MapViewerWorld;
 import org.lwjgl.PointerBuffer;
@@ -16,38 +17,35 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public class WorldLoaderDialog extends Dialog {
+public class AnvilLoaderDialog extends Dialog {
     private final Viewer viewer;
 
-    private Path worldPath = null;
-    private final RegionToViewerConverter regionToViewerConverter = new RegionToViewerConverter();
+    private final ProgressTracker progressTracker = new ProgressTracker();
 
-    public WorldLoaderDialog(Viewer viewer) {
+    private Path worldPath = null;
+    private CompletableFuture<MapViewerWorld> worldFuture;
+
+    public AnvilLoaderDialog(Viewer viewer) {
         this.viewer = viewer;
     }
 
     @Override
     public void render() {
-        if(regionToViewerConverter.getMapViewerWorldFuture() == null || regionToViewerConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
+        if(worldFuture == null || worldFuture.isCompletedExceptionally()) {
             renderSelectWorldDialog();
         } else {
-            if(!regionToViewerConverter.getMapViewerWorldFuture().isDone()) {
+            if(!worldFuture.isDone()) {
                 renderWorldLoadingDialog();
             }
-        }
-
-        if(regionToViewerConverter.getMapViewerWorldFuture() != null && regionToViewerConverter.getMapViewerWorldFuture().isDone()
-                && !regionToViewerConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
-            viewer.setMapViewerWorld(regionToViewerConverter.getMapViewerWorldFuture().join());
-            disable();
         }
     }
 
     private void renderSelectWorldDialog() {
         ImGui.setNextWindowSize(200, 115);
-        ImGui.begin("Select world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
+        ImGui.begin("Select Anvil world", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
         String buttonText;
         boolean isWorldButtonRed = false;
@@ -72,13 +70,20 @@ public class WorldLoaderDialog extends Dialog {
         if(isPathValid()) {
             Utils.imGuiAlignNextItem("Load", 0);
             if(ImGui.button("Load")) {
-                regionToViewerConverter.convert(new AnvilMapLoader(worldPath, -64, 320));
+                worldFuture = RegionFile.convert(progressTracker, new AnvilMapLoader(worldPath, -64, 320)).whenComplete((mapViewerWorld, throwable) -> {
+                    if(throwable != null) {
+                        throwable.printStackTrace();
+                    } else {
+                        viewer.setMapViewerWorld(mapViewerWorld);
+                        disable();
+                    }
+                });
             }
         }
 
-        if(regionToViewerConverter.getMapViewerWorldFuture() != null && regionToViewerConverter.getMapViewerWorldFuture().isCompletedExceptionally()) {
+        if(worldFuture != null && worldFuture.isCompletedExceptionally()) {
             ImGui.pushStyleColor(ImGuiCol.Text, 255, 0, 0, 255);
-            ImGui.textWrapped(regionToViewerConverter.getMapViewerWorldFuture().handle((mapViewerWorld, throwable) -> throwable.getMessage()).join());
+            ImGui.textWrapped(worldFuture.handle((mapViewerWorld, throwable) -> throwable.getMessage()).join());
             ImGui.popStyleColor();
         }
 
@@ -122,23 +127,19 @@ public class WorldLoaderDialog extends Dialog {
 
     private void renderWorldLoadingDialog() {
         ImGui.setNextWindowSize(600, 100);
-        ImGui.begin("Loading world...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
+        ImGui.begin("Loading anvil world...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        String text = "Loaded " + regionToViewerConverter.getProgressTracker().getCurrent() + " out of " +
-                regionToViewerConverter.getProgressTracker().getTotal() + " chunks (" +
-                (int) (regionToViewerConverter.getProgressTracker().getProgress() * 100) + "%)";
-        Utils.imGuiProgressBar(text, regionToViewerConverter.getProgressTracker());
+        Utils.imGuiProgressBar(progressTracker);
 
         ImGui.end();
     }
 
     public MapViewerWorld getWorld() {
-        return regionToViewerConverter.getMapViewerWorldFuture().join();
+        return worldFuture.join();
     }
 
     @Override
     protected void reset() {
-        regionToViewerConverter.reset();
         viewer.setMapViewerWorld(null);
     }
 }

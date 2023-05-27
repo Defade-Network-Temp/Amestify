@@ -116,10 +116,9 @@ public class AmethystSaveDatabaseGUI extends Dialog {
 
     private void renderSavingDialog() {
         ImGui.setNextWindowSize(600, 100);
-        String text = saveFuture.isDone() ? "Uploading file..." : "Converting file...";
-        ImGui.begin(text, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
+        ImGui.begin(saveFuture.isDone() ? "Uploading file..." : "Converting file...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        Utils.imGuiProgressBar(text, progressTracker);
+        Utils.imGuiProgressBar(progressTracker);
         ImGui.end();
     }
 

@@ -10,15 +10,13 @@ public class ProgressTracker {
         this.current = 0;
     }
 
-    public void increment() {
+    public void increment(String message) {
         current++;
+        this.message = message;
     }
 
-    public void increment(int amount) {
+    public void increment(int amount, String message) {
         current += amount;
-    }
-
-    public void setMessage(String message) {
         this.message = message;
     }
 

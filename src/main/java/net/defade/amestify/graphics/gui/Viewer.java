@@ -19,7 +19,7 @@ import net.defade.amestify.world.viewer.MapViewerRegion;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveDatabaseGUI;
 import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
-import net.defade.amestify.graphics.gui.dialog.WorldLoaderDialog;
+import net.defade.amestify.graphics.gui.dialog.AnvilLoaderDialog;
 import net.defade.amestify.graphics.rendering.Assets;
 import net.defade.amestify.graphics.rendering.Camera;
 import net.defade.amestify.graphics.rendering.Framebuffer;
@@ -65,7 +65,7 @@ public class Viewer {
         uiComponents.put(DatabaseMapUI.class, new DatabaseMapUI(this));
 
         dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
-        dialogs.put(WorldLoaderDialog.class, new WorldLoaderDialog(this));
+        dialogs.put(AnvilLoaderDialog.class, new AnvilLoaderDialog(this));
         dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
         dialogs.put(AmethystSaveDatabaseGUI.class, new AmethystSaveDatabaseGUI(this));
     }
@@ -160,8 +160,8 @@ public class Viewer {
     private void renderMenuBar() {
         if(ImGui.beginMenuBar()) {
             if(ImGui.beginMenu("File")) {
-                if(ImGui.menuItem("Open world")) {
-                    getDialog(WorldLoaderDialog.class).enable();
+                if(ImGui.menuItem("Open anvil world")) {
+                    getDialog(AnvilLoaderDialog.class).enable();
                 }
                 ImGui.endMenu();
             }

@@ -103,7 +103,8 @@ public class AmethystSaver {
             for (int z = 0; z < 32; z++) {
                 Chunk chunk = regionFile.getChunk(x, z);
                 if(chunk == null || chunk.isEmpty()) {
-                    progressTracker.increment();
+                    progressTracker.increment("Saved " + progressTracker.getCurrent() + " out of " + progressTracker.getTotal() + " chunks (" +
+                            (int) (progressTracker.getProgress() * 100) + "%)");
                     continue;
                 }
 
@@ -115,7 +116,8 @@ public class AmethystSaver {
                 outputFile.write(serializedChunk);
                 fileLock.unlock();
 
-                progressTracker.increment();
+                progressTracker.increment("Saved " + progressTracker.getCurrent() + " out of " + progressTracker.getTotal() + " chunks (" +
+                        (int) (progressTracker.getProgress() * 100) + "%)");
             }
         }
     }

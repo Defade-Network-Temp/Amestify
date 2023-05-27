@@ -76,8 +76,8 @@ public class Utils {
         }
     }
 
-    public static void imGuiProgressBar(String text, ProgressTracker progressTracker) {
-        if(progressTracker.getMessage() != null) text = progressTracker.getMessage();
+    public static void imGuiProgressBar(ProgressTracker progressTracker) {
+        String text = progressTracker.getMessage() == null ? "..." : progressTracker.getMessage();
         float windowWidth = ImGui.getWindowSizeX();
         float windowHeight = ImGui.getWindowSizeY();
         float width = 600;

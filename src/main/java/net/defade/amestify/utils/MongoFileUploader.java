@@ -48,8 +48,7 @@ public class MongoFileUploader {
                     gridFSUploadStream.write(buffer, 0, length);
                     totalSent += length;
 
-                    progressTracker.increment(length);
-                    progressTracker.setMessage(convertUnit(totalSent) + "/" + convertUnit(fileLength) + " (" + Math.round(totalSent / (double) fileLength * 100) + "%)");
+                    progressTracker.increment(length, convertUnit(totalSent) + "/" + convertUnit(fileLength) + " (" + Math.round(totalSent / (double) fileLength * 100) + "%)");
                 }
 
                 gridFSUploadStream.flush();

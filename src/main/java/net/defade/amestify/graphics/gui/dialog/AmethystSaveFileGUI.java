@@ -122,9 +122,7 @@ public class AmethystSaveFileGUI extends Dialog {
         ImGui.setNextWindowSize(600, 100);
         ImGui.begin("Saving world...", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoResize);
 
-        String text = "Saved " + progressTracker.getCurrent() + " out of " + progressTracker.getTotal() + " chunks (" +
-                (int) (progressTracker.getProgress() * 100) + "%)";
-        Utils.imGuiProgressBar(text, progressTracker);
+        Utils.imGuiProgressBar(progressTracker);
 
         ImGui.end();
     }

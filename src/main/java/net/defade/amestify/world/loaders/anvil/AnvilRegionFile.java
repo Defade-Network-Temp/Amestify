@@ -54,7 +54,9 @@ public class AnvilRegionFile implements RegionFile {
             offset |= regionFile.read() & 0xFF;
 
             if (regionFile.readByte() == 0) {
-                if(progressTracker != null) progressTracker.increment();
+                if(progressTracker != null) progressTracker.increment("Loaded " + progressTracker.getCurrent() + " out of " +
+                        progressTracker.getTotal() + " chunks (" +
+                        (int) (progressTracker.getProgress() * 100) + "%)");
                 continue;
             }
 
@@ -71,7 +73,9 @@ public class AnvilRegionFile implements RegionFile {
                     compressionType, chunkInputStream
             );
 
-            if(progressTracker != null) progressTracker.increment();
+            if(progressTracker != null) progressTracker.increment("Loaded " + progressTracker.getCurrent() + " out of " +
+                    progressTracker.getTotal() + " chunks (" +
+                    (int) (progressTracker.getProgress() * 100) + "%)");
             chunks[i] = chunk;
         }
 
