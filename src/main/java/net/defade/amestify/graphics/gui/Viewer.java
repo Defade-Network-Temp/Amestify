@@ -17,6 +17,7 @@ import net.defade.amestify.graphics.gui.dialog.AnvilLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
 import net.defade.amestify.graphics.gui.dialog.DatabaseLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
+import net.defade.amestify.graphics.gui.tools.BlockBiomeEditor;
 import net.defade.amestify.graphics.gui.tools.Tool;
 import net.defade.amestify.graphics.gui.tools.ZoneBiomeEditorTool;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
@@ -80,6 +81,7 @@ public class Viewer {
         dialogs.put(DatabaseLoaderDialog.class, new DatabaseLoaderDialog(this));
 
         tools.put(ZoneBiomeEditorTool.class, new ZoneBiomeEditorTool(this));
+        tools.put(BlockBiomeEditor.class, new BlockBiomeEditor(this));
         getTool(ZoneBiomeEditorTool.class).setActive(true);
     }
 
