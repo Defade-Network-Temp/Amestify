@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MapViewerWorld {
     private final WorldLoader worldLoader;
@@ -22,7 +23,7 @@ public class MapViewerWorld {
     private final BiomeColorLayer biomeColorLayer = new BiomeColorLayer();
     private final Biome plainsBiome;
 
-    private final Map<RegionPos, MapViewerRegion> regionFiles = new HashMap<>();
+    private final Map<RegionPos, MapViewerRegion> regionFiles = new ConcurrentHashMap<>();
 
     public MapViewerWorld(WorldLoader worldLoader) throws FileNotFoundException {
         this.worldLoader = worldLoader;

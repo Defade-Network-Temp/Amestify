@@ -48,27 +48,31 @@ public class RegionRenderer {
     private boolean isDirty = false;
 
     private final AtomicBoolean isBuildingMesh = new AtomicBoolean(false);
+    private boolean outdatedMeshData = false; // When the updateMesh() method is called but the mesh is already being built
 
     public RegionRenderer(MapViewerRegion mapViewerRegion) {
         this.mapViewerRegion = mapViewerRegion;
     }
 
     public void updateMesh() {
-        if (isBuildingMesh.get()) return;
+        if (isBuildingMesh.get()) {
+            outdatedMeshData = true;
+            return;
+        }
         isBuildingMesh.set(true);
 
         THREAD_POOL.submit(() -> {
-            this.vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
+            float[] vertices = new float[32 * 32 * 16 * 16 * 4 * VERTEX_SIZE];
 
             int squaresToRender = 0;
             for (int layer = MapViewerRegion.TEXTURES_DEPTH - 1; layer >= 0; layer--) {
-                squaresToRender += generateMeshForLayer(layer, squaresToRender);
+                squaresToRender += generateMeshForLayer(vertices, layer, squaresToRender);
             }
 
-            float[] vertices = new float[squaresToRender * 4 * VERTEX_SIZE];
-            System.arraycopy(this.vertices, 0, vertices, 0, vertices.length);
+            float[] newVertices = new float[squaresToRender * 4 * VERTEX_SIZE];
+            System.arraycopy(vertices, 0, newVertices, 0, newVertices.length);
 
-            this.vertices = vertices;
+            this.vertices = newVertices;
             this.squares = squaresToRender;
 
             isDirty = true;
@@ -127,11 +131,16 @@ public class RegionRenderer {
             isDirty = false;
         }
 
+        if(!isBuildingMesh.get() && outdatedMeshData) {
+            updateMesh();
+            outdatedMeshData = false;
+        }
+
         glBindVertexArray(vaoID);
         glDrawElements(GL_TRIANGLES, squares * 6, GL_UNSIGNED_INT, 0);
     }
 
-    private int generateMeshForLayer(int layer, int renderedSquares) {
+    private int generateMeshForLayer(float[] vertices, int layer, int renderedSquares) {
         int createdSquares = 0;
         boolean[] isMeshed = new boolean[32 * 32 * 16 * 16];
         for (int x = 0; x < 512; x++) {
@@ -179,7 +188,7 @@ public class RegionRenderer {
                     }
                 }
 
-                addBlockAtRelativePos(renderedSquares + createdSquares, x, z, endX, endZ, texture, biome);
+                addBlockAtRelativePos(vertices, renderedSquares + createdSquares, x, z, endX, endZ, texture, biome);
                 createdSquares++;
             }
         }
@@ -195,7 +204,7 @@ public class RegionRenderer {
         return mapViewerRegion.getMapViewerBiome(x, z, layer);
     }
 
-    private void addBlockAtRelativePos(int renderedSquares, int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
+    private void addBlockAtRelativePos(float[] vertices, int renderedSquares, int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
         relativeStartX = mapViewerRegion.getRegionPos().x() * 512 + relativeStartX;
         relativeStartZ = mapViewerRegion.getRegionPos().z() * 512 + relativeStartZ;
         relativeEndX = mapViewerRegion.getRegionPos().x() * 512 + relativeEndX;
