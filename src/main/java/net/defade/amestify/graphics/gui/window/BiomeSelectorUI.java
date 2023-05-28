@@ -9,7 +9,7 @@ import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.biome.Biome;
 import java.util.Comparator;
 
-public class BiomeSelectorUI implements UIComponent {
+public class BiomeSelectorUI extends UIComponent {
     private final Viewer viewer;
 
     private Biome selectedBiome = null;

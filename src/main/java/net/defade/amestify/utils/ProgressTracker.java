@@ -15,7 +15,7 @@ public class ProgressTracker {
         this.message = message;
     }
 
-    public void increment(int amount, String message) {
+    public void increment(long amount, String message) {
         current += amount;
         this.message = message;
     }

@@ -1,5 +1,9 @@
 package net.defade.amestify.graphics.gui.window;
 
-public interface UIComponent {
-    void render();
+public abstract class UIComponent {
+    public abstract void render();
+
+    public boolean isDisabledWhenNoMapLoaded() {
+        return true;
+    }
 }

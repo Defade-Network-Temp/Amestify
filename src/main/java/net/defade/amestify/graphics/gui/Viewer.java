@@ -10,6 +10,12 @@ import imgui.type.ImBoolean;
 import imgui.type.ImString;
 import net.defade.amestify.control.MouseListener;
 import net.defade.amestify.database.MongoConnector;
+import net.defade.amestify.graphics.gui.dialog.AmethystLoaderDialog;
+import net.defade.amestify.graphics.gui.dialog.AmethystSaveDatabaseGUI;
+import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
+import net.defade.amestify.graphics.gui.dialog.AnvilLoaderDialog;
+import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
+import net.defade.amestify.graphics.gui.dialog.DatabaseLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
 import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
@@ -17,11 +23,6 @@ import net.defade.amestify.graphics.gui.window.DatabaseMapUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.viewer.MapViewerRegion;
-import net.defade.amestify.graphics.gui.dialog.AmethystLoaderDialog;
-import net.defade.amestify.graphics.gui.dialog.AmethystSaveDatabaseGUI;
-import net.defade.amestify.graphics.gui.dialog.AmethystSaveFileGUI;
-import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
-import net.defade.amestify.graphics.gui.dialog.AnvilLoaderDialog;
 import net.defade.amestify.graphics.rendering.Assets;
 import net.defade.amestify.graphics.rendering.Camera;
 import net.defade.amestify.graphics.rendering.Framebuffer;
@@ -72,6 +73,7 @@ public class Viewer {
         dialogs.put(AmethystLoaderDialog.class, new AmethystLoaderDialog(this));
         dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
         dialogs.put(AmethystSaveDatabaseGUI.class, new AmethystSaveDatabaseGUI(this));
+        dialogs.put(DatabaseLoaderDialog.class, new DatabaseLoaderDialog(this));
     }
 
     public void render(float deltaTime) {
@@ -87,9 +89,21 @@ public class Viewer {
 
         renderMenuBar();
 
-        if(mapViewerWorld == null) disableView();
+        uiComponents.values().forEach(uiComponent -> {
+            if(isViewDisabled) {
+                uiComponent.render();
+            } else {
+                if(mapViewerWorld == null && uiComponent.isDisabledWhenNoMapLoaded()) {
+                    disableView();
+                    uiComponent.render();
+                    enableView();
+                } else {
+                    uiComponent.render();
+                }
+            }
+        });
 
-        uiComponents.values().forEach(UIComponent::render);
+        if(mapViewerWorld == null) disableView();
 
         renderTooltipInfo();
 
@@ -120,7 +134,7 @@ public class Viewer {
         this.mapViewerWorld = mapViewerWorld;
     }
 
-    public  <T extends UIComponent> T getUIComponent(Class<T> clazz) {
+    public <T extends UIComponent> T getUIComponent(Class<T> clazz) {
         UIComponent uiComponent = uiComponents.get(clazz);
         if(uiComponent == null) {
             throw new RuntimeException("UIComponent " + clazz.getName() + " is not registered");
@@ -134,7 +148,7 @@ public class Viewer {
         }
     }
 
-    private <T extends Dialog> T getDialog(Class<T> clazz) {
+    public <T extends Dialog> T getDialog(Class<T> clazz) {
         Dialog dialog = dialogs.get(clazz);
         if(dialog == null) {
             throw new RuntimeException("Dialog " + clazz.getName() + " is not registered");

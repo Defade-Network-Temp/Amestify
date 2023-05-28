@@ -48,7 +48,7 @@ public class MongoFileUploader {
                     gridFSUploadStream.write(buffer, 0, length);
                     totalSent += length;
 
-                    progressTracker.increment(length, convertUnit(totalSent) + "/" + convertUnit(fileLength) + " (" + Math.round(totalSent / (double) fileLength * 100) + "%)");
+                    progressTracker.increment(length, Utils.convertFileSizeUnit(totalSent) + "/" + Utils.convertFileSizeUnit(fileLength) + " (" + Math.round(totalSent / (double) fileLength * 100) + "%)");
                 }
 
                 gridFSUploadStream.flush();
@@ -61,15 +61,5 @@ public class MongoFileUploader {
         });
 
         return completableFuture;
-    }
-
-    private static String convertUnit(long bytes) {
-        if(bytes < 1024 * 1024) {
-            return Math.round(bytes / 1024D * 100) / 100D + "ko";
-        } else if(bytes < 1024 * 1024 * 1024) {
-            return Math.round(bytes / 1024D / 1024D * 100) / 100D + "mo";
-        } else {
-            return Math.round(bytes / 1024D / 1024D / 1024D * 100) / 100D + "go";
-        }
     }
 }

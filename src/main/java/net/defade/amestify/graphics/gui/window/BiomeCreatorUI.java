@@ -10,7 +10,7 @@ import net.defade.amestify.world.biome.BiomeEffects;
 
 import java.awt.Color;
 
-public class BiomeCreatorUI implements UIComponent {
+public class BiomeCreatorUI extends UIComponent {
     private final Viewer viewer;
 
     private final float[] pickerColor = new float[3];

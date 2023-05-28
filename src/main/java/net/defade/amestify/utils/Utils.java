@@ -105,4 +105,14 @@ public class Utils {
     public static int getChunkCoordZ(long index) {
         return (int) index;
     }
+
+    public static String convertFileSizeUnit(long bytes) {
+        if(bytes < 1024 * 1024) {
+            return Math.round(bytes / 1024D * 100) / 100D + "ko";
+        } else if(bytes < 1024 * 1024 * 1024) {
+            return Math.round(bytes / 1024D / 1024D * 100) / 100D + "mo";
+        } else {
+            return Math.round(bytes / 1024D / 1024D / 1024D * 100) / 100D + "go";
+        }
+    }
 }

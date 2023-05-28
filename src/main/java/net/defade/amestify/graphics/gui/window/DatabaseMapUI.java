@@ -7,6 +7,7 @@ import imgui.ImGui;
 import imgui.type.ImString;
 import net.defade.amestify.database.MongoConnector;
 import net.defade.amestify.graphics.gui.Viewer;
+import net.defade.amestify.graphics.gui.dialog.DatabaseLoaderDialog;
 import net.defade.amestify.graphics.rendering.Assets;
 import org.bson.BsonValue;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
-public class DatabaseMapUI implements UIComponent {
+public class DatabaseMapUI extends UIComponent {
     private final Viewer viewer;
 
     private boolean wasConnectedToDatabase = false;
@@ -64,10 +65,23 @@ public class DatabaseMapUI implements UIComponent {
                         ImGui.text("     " + map.name);
                         ImGui.sameLine();
 
+                        // ImGUI does a very dumb thing where it takes the texture ID as the stack ID.
+                        // So if you have twice the same image on the stack, only the first one will work.
+                        // https://github.com/ocornut/imgui/issues/4471
+                        ImGui.pushID(map.name + " edit");
                         if(ImGui.imageButton(Assets.EDIT_ICON.getTextureId(), imageSize, imageSize)) {
                             modifyingMap = map;
                             mapName.set(map.name);
                         }
+                        ImGui.popID();
+
+                        ImGui.sameLine();
+                        ImGui.pushID(map.name + " open");
+                        if(ImGui.imageButton(Assets.OPEN_ICON.getTextureId(), imageSize, imageSize)) {
+                            System.out.println(map);
+                            viewer.getDialog(DatabaseLoaderDialog.class).open(map.id);
+                        }
+                        ImGui.popID();
                     }
                 }
                 ImGui.treePop();
@@ -75,6 +89,11 @@ public class DatabaseMapUI implements UIComponent {
         }
 
         ImGui.end();
+    }
+
+    @Override
+    public boolean isDisabledWhenNoMapLoaded() {
+        return false;
     }
 
     private void checkForDBUpdates() {
