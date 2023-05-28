@@ -141,5 +141,6 @@ public class AnvilLoaderDialog extends Dialog {
     @Override
     protected void reset() {
         viewer.setMapViewerWorld(null);
+        worldFuture = null;
     }
 }
