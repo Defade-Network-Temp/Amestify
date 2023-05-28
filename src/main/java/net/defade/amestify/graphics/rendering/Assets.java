@@ -25,6 +25,7 @@ public class Assets {
     public static Texture EDIT_ICON;
     public static Texture DONE_ICON;
     public static Texture OPEN_ICON;
+    public static Texture GRID_SELECTION_ICON;
 
     public static void init() throws IOException {
         Block.init();
@@ -45,6 +46,7 @@ public class Assets {
         EDIT_ICON = new Texture(Paths.get("gui", "edit.png"));
         DONE_ICON = new Texture(Paths.get("gui", "done.png"));
         OPEN_ICON = new Texture(Paths.get("gui", "open.png"));
+        GRID_SELECTION_ICON = new Texture(Paths.get("gui", "grid-selection.png"));
     }
 
     // Java can't list files inside the JAR, so we copy them to a temp folder.

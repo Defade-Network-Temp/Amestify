@@ -17,9 +17,12 @@ import net.defade.amestify.graphics.gui.dialog.AnvilLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
 import net.defade.amestify.graphics.gui.dialog.DatabaseLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
+import net.defade.amestify.graphics.gui.tools.Tool;
+import net.defade.amestify.graphics.gui.tools.ZoneBiomeEditorTool;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
 import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
 import net.defade.amestify.graphics.gui.window.DatabaseMapUI;
+import net.defade.amestify.graphics.gui.window.ToolBoxUI;
 import net.defade.amestify.graphics.gui.window.UIComponent;
 import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.viewer.MapViewerRegion;
@@ -35,6 +38,7 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector4f;
 import java.lang.Math;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,10 +57,9 @@ public class Viewer {
     private Vector2f clickOrigin = null;
     private final Vector2i hoveredBlock = new Vector2i(0, 0);
 
-    private Vector2i selectedRegionOrigin = null;
-
     private final Map<Class<? extends UIComponent>, UIComponent> uiComponents = new HashMap<>();
     private final Map<Class<? extends Dialog>, Dialog> dialogs = new HashMap<>();
+    private final Map<Class<? extends Tool>, Tool> tools = new HashMap<>();
 
     private boolean isViewDisabled = false;
 
@@ -67,6 +70,7 @@ public class Viewer {
         uiComponents.put(BiomeCreatorUI.class, new BiomeCreatorUI(this));
         uiComponents.put(BiomeSelectorUI.class, new BiomeSelectorUI(this));
         uiComponents.put(DatabaseMapUI.class, new DatabaseMapUI(this));
+        uiComponents.put(ToolBoxUI.class, new ToolBoxUI(this));
 
         dialogs.put(DatabaseConnectorDialog.class, new DatabaseConnectorDialog(this));
         dialogs.put(AnvilLoaderDialog.class, new AnvilLoaderDialog(this));
@@ -74,6 +78,9 @@ public class Viewer {
         dialogs.put(AmethystSaveFileGUI.class, new AmethystSaveFileGUI(this));
         dialogs.put(AmethystSaveDatabaseGUI.class, new AmethystSaveDatabaseGUI(this));
         dialogs.put(DatabaseLoaderDialog.class, new DatabaseLoaderDialog(this));
+
+        tools.put(ZoneBiomeEditorTool.class, new ZoneBiomeEditorTool(this));
+        getTool(ZoneBiomeEditorTool.class).setActive(true);
     }
 
     public void render(float deltaTime) {
@@ -160,6 +167,33 @@ public class Viewer {
         } else {
             return clazz.cast(dialog);
         }
+    }
+
+    public <T extends Tool> T getTool(Class<T> clazz) {
+        Tool tool = tools.get(clazz);
+        if(tool == null) {
+            throw new RuntimeException("Tool " + clazz.getName() + " is not registered");
+        }
+
+        if (!clazz.isAssignableFrom(tool.getClass())) {
+            throw new RuntimeException("Tool " + tool.getClass().getName() +
+                    " is not assignable from " + clazz.getName());
+        } else {
+            return clazz.cast(tool);
+        }
+    }
+
+    public Collection<Tool> getTools() {
+        return tools.values();
+    }
+
+    public void useTool(Tool tool) {
+        tools.values().forEach(tools -> tools.setActive(false));
+        tool.setActive(true);
+    }
+
+    public Vector2i getHoveredBlock() {
+        return hoveredBlock;
     }
 
     private void setupDockspace() {
@@ -270,6 +304,9 @@ public class Viewer {
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
         Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", getUIComponent(BiomeSelectorUI.class).shouldShowBiomeLayer());
         uploadHighlightedElements();
+        tools.values().forEach(tool -> {
+            if(tool.isActive()) tool.renderShapes(shapeRenderer);
+        });
 
         Assets.BLOCK_SHEET.bind();
         if(mapViewerWorld != null) mapViewerWorld.getBiomeColorLayer().bind();
@@ -344,7 +381,7 @@ public class Viewer {
             }
         }
 
-        if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
+        if (MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
             if(clickOrigin == null && isMouseInViewport()) {
                 clickOrigin = new Vector2f(getViewportOrthoX(), getViewportOrthoY());
             }
@@ -358,42 +395,16 @@ public class Viewer {
             clickOrigin = null;
         }
 
-        if(MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
-            if(selectedRegionOrigin == null && isMouseInViewport()) {
-                selectedRegionOrigin = new Vector2i(hoveredBlock);
+        if(MouseListener.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
+            if(isMouseInViewport()) {
+                tools.values().forEach(tool -> {
+                    if (tool.isActive()) tool.updateClick(true);
+                });
             }
-        } else if (selectedRegionOrigin != null) {
-            Biome selectedBiome = getUIComponent(BiomeSelectorUI.class).getSelectedBiome();
-            int minX = Math.min(selectedRegionOrigin.x, hoveredBlock.x);
-            int maxX = Math.max(selectedRegionOrigin.x, hoveredBlock.x);
-            int minZ = Math.min(selectedRegionOrigin.y, hoveredBlock.y);
-            int maxZ = Math.max(selectedRegionOrigin.y, hoveredBlock.y);
-
-            int minRegionX = (int) Math.floor((double) minX / 512);
-            int maxRegionX = (int) Math.floor((double) maxX / 512);
-            int minRegionZ = (int) Math.floor((double) minZ / 512);
-            int maxRegionZ = (int) Math.floor((double) maxZ / 512);
-            for (int regionX = minRegionX; regionX <= maxRegionX; regionX++) {
-                for (int regionZ = minRegionZ; regionZ <= maxRegionZ; regionZ++) {
-                    MapViewerRegion mapViewerRegion = mapViewerWorld.getRegion(regionX, regionZ);
-                    if(mapViewerRegion == null) continue;
-
-                    int minRegionBlockX = Math.max(minX, regionX * 512);
-                    int maxRegionBlockX = Math.min(maxX, regionX * 512 + 511);
-                    int minRegionBlockZ = Math.max(minZ, regionZ * 512);
-                    int maxRegionBlockZ = Math.min(maxZ, regionZ * 512 + 511);
-
-                    for (int x = minRegionBlockX; x <= maxRegionBlockX; x += 4) {
-                        for (int z = minRegionBlockZ; z <= maxRegionBlockZ; z += 4) {
-                            mapViewerRegion.setBiome(x, z, selectedBiome);
-                        }
-                    }
-
-                    mapViewerRegion.getRenderer().updateMesh();
-                }
-            }
-
-            selectedRegionOrigin = null;
+        } else {
+            tools.values().forEach(tool -> {
+                if (tool.isActive()) tool.updateClick(false);
+            });
         }
     }
 
@@ -406,10 +417,6 @@ public class Viewer {
         }
 
         shapeRenderer.addSquare(hoveredBlock.x, hoveredBlock.y, hoveredBlock.x + 1, hoveredBlock.y + 1, 0xAA282828);
-
-        if(selectedRegionOrigin != null) {
-            shapeRenderer.addSquare(selectedRegionOrigin.x, selectedRegionOrigin.y, hoveredBlock.x + 1, hoveredBlock.y, 0x99C46200);
-        }
     }
 
     private void renderRegions() {
