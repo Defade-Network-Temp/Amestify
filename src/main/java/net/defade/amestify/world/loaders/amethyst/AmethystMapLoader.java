@@ -130,7 +130,7 @@ public class AmethystMapLoader implements WorldLoader {
         }
     }
 
-    private CompletableFuture<RegionFile> loadRegion(ProgressTracker progressTracker, MapViewerWorld mapViewerWorld, RegionPos regionPos) throws IOException {
+    private CompletableFuture<RegionFile> loadRegion(ProgressTracker progressTracker, MapViewerWorld mapViewerWorld, RegionPos regionPos) {
         CompletableFuture<RegionFile> regionFuture = new CompletableFuture<>();
         List<CompletableFuture<Chunk>> loadingChunks = new ArrayList<>();
 
@@ -138,24 +138,33 @@ public class AmethystMapLoader implements WorldLoader {
             CompletableFuture<Chunk> chunkFuture = new CompletableFuture<>();
             loadingChunks.add(chunkFuture);
 
-            reentrantLock.lock();
-            file.seek(chunkIndex);
+            THREAD_POOL.submit(() -> {
+                reentrantLock.lock();
+                try {
+                    file.seek(chunkIndex);
 
-            long chunkPos = file.readLong();
-            int x = Utils.getChunkCoordX(chunkPos);
-            int z = Utils.getChunkCoordZ(chunkPos);
+                    long chunkPos = file.readLong();
+                    int x = Utils.getChunkCoordX(chunkPos);
+                    int z = Utils.getChunkCoordZ(chunkPos);
 
-            byte[] chunkData = new byte[file.readInt()];
-            file.read(chunkData);
+                    byte[] chunkData = new byte[file.readInt()];
+                    file.read(chunkData);
 
-            reentrantLock.unlock();
+                    reentrantLock.unlock();
 
-            Chunk chunk = new AmethystChunk(mapViewerWorld, new ChunkPos(x, z), -64, 320,
-                    biomes, ByteBuffer.wrap(chunkData)); // TODO
+                    Chunk chunk = new AmethystChunk(mapViewerWorld, new ChunkPos(x, z), -64, 320,
+                            biomes, ByteBuffer.wrap(chunkData)); // TODO
 
-            if(progressTracker != null) progressTracker.increment("Loaded " + progressTracker.getCurrent() + " out of " +
-                    progressTracker.getTotal() + " chunks (" + (int) (progressTracker.getProgress() * 100) + "%");
-            chunkFuture.complete(chunk);
+                    if (progressTracker != null) {
+                        progressTracker.increment("Loaded " + progressTracker.getCurrent() + " out of " +
+                                progressTracker.getTotal() + " chunks (" + (int) (progressTracker.getProgress() * 100) + "%)");
+                    }
+                    chunkFuture.complete(chunk);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                    chunkFuture.completeExceptionally(exception);
+                }
+            });
         }
 
         CompletableFuture.allOf(loadingChunks.toArray(new CompletableFuture[0])).thenRun(() -> {
