@@ -1,6 +1,7 @@
 package net.defade.amestify.graphics.gui.tools;
 
 import net.defade.amestify.graphics.gui.Viewer;
+import net.defade.amestify.graphics.gui.renderer.ShapeRenderer;
 import net.defade.amestify.graphics.gui.window.BiomeSelectorUI;
 import net.defade.amestify.graphics.rendering.Assets;
 import net.defade.amestify.world.viewer.MapViewerRegion;
@@ -73,5 +74,11 @@ public class BlockBiomeEditor extends Tool {
         } else {
             previousBiomePosition = null;
         }
+    }
+
+    @Override
+    public void renderShapes(ShapeRenderer shapeRenderer) {
+        shapeRenderer.addSquare(viewer.getHoveredBlock().x & 0xFFFFFFFC, viewer.getHoveredBlock().y & 0xFFFFFFFC,
+                viewer.getHoveredBlock().x + 4 & 0xFFFFFFFC, viewer.getHoveredBlock().y + 4 & 0xFFFFFFFC, 0xAA282828);
     }
 }

@@ -305,7 +305,7 @@ public class Viewer {
         Assets.CHUNK_SHADER.uploadMat4f("projectionUniform", camera.getProjectionMatrix());
         Assets.CHUNK_SHADER.uploadMat4f("viewUniform", camera.getViewMatrix());
         Assets.CHUNK_SHADER.uploadBoolean("displayBiomeColor", getUIComponent(BiomeSelectorUI.class).shouldShowBiomeLayer());
-        uploadHighlightedElements();
+        uploadHighlightedBiome();
         tools.values().forEach(tool -> {
             if(tool.isActive()) tool.renderShapes(shapeRenderer);
         });
@@ -410,15 +410,13 @@ public class Viewer {
         }
     }
 
-    private void uploadHighlightedElements() {
+    private void uploadHighlightedBiome() {
         if(mapViewerWorld != null && isMouseInViewport()) {
             Biome highlightedBiome = mapViewerWorld.getBiomeAt(hoveredBlock.x, hoveredBlock.y);
             Assets.CHUNK_SHADER.uploadFloat("highlightedBiome", highlightedBiome != null ? highlightedBiome.id() : -1);
             Assets.CHUNK_SHADER.uploadFloat("biomeHighlightColorMultiplier",
                     Math.max(0.5f, Utils.lerp(0.75f, 0.5f, camera.getZoom() / (Camera.MAX_ZOOM / 3))));
         }
-
-        shapeRenderer.addSquare(hoveredBlock.x, hoveredBlock.y, hoveredBlock.x + 1, hoveredBlock.y + 1, 0xAA282828);
     }
 
     private void renderRegions() {
