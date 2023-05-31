@@ -18,6 +18,7 @@ import net.defade.amestify.graphics.gui.dialog.DatabaseConnectorDialog;
 import net.defade.amestify.graphics.gui.dialog.DatabaseLoaderDialog;
 import net.defade.amestify.graphics.gui.dialog.Dialog;
 import net.defade.amestify.graphics.gui.tools.BlockBiomeEditor;
+import net.defade.amestify.graphics.gui.tools.DeleteChunkTool;
 import net.defade.amestify.graphics.gui.tools.Tool;
 import net.defade.amestify.graphics.gui.tools.ZoneBiomeEditorTool;
 import net.defade.amestify.graphics.gui.window.BiomeCreatorUI;
@@ -82,6 +83,7 @@ public class Viewer {
 
         tools.put(ZoneBiomeEditorTool.class, new ZoneBiomeEditorTool(this));
         tools.put(BlockBiomeEditor.class, new BlockBiomeEditor(this));
+        tools.put(DeleteChunkTool.class, new DeleteChunkTool(this));
         getTool(ZoneBiomeEditorTool.class).setActive(true);
     }
 

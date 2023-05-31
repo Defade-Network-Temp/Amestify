@@ -15,9 +15,11 @@ public class MapViewerRegion {
     private final Biome plainsBiome;
 
     private final int minY;
+
     private final BlockTexture[] blockTextures = new BlockTexture[512 * 512 * TEXTURES_DEPTH];
     private final Biome[] biomes = new Biome[128 * 128 * TEXTURES_DEPTH]; // Biomes in minecraft are stored in 4x4 blocks
     private final Biome[] updatedBiomes = new Biome[128 * 128]; // Biomes that have been updated. A null value means that the biome has not been updated so the original biome should be saved.
+    private final boolean[] deletedChunks = new boolean[32 * 32]; // Chunks that have been deleted
 
     private final RegionRenderer regionRenderer = new RegionRenderer(this);
 
@@ -88,6 +90,14 @@ public class MapViewerRegion {
 
     public RegionRenderer getRenderer() {
         return regionRenderer;
+    }
+
+    public boolean isChunkDeleted(int x, int z) {
+        return deletedChunks[RegionFile.getChunkIndex(x, z)];
+    }
+
+    public void setChunkDeleted(int x, int z, boolean deleted) {
+        deletedChunks[RegionFile.getChunkIndex(x, z)] = deleted;
     }
 
     private void calculateTexturesForChunk(Chunk chunk) {

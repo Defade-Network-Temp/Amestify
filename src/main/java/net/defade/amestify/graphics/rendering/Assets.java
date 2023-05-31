@@ -27,6 +27,7 @@ public class Assets {
     public static Texture OPEN_ICON;
     public static Texture GRID_SELECTION_ICON;
     public static Texture BLOCK_BIOME_EDITOR_ICON;
+    public static Texture DELETE_CHUNK_ICON;
 
     public static void init() throws IOException {
         Block.init();
@@ -49,6 +50,7 @@ public class Assets {
         OPEN_ICON = new Texture(Paths.get("gui", "open.png"));
         GRID_SELECTION_ICON = new Texture(Paths.get("gui", "grid-selection.png"));
         BLOCK_BIOME_EDITOR_ICON = new Texture(Paths.get("gui", "block-biome-editor.png"));
+        DELETE_CHUNK_ICON = new Texture(Paths.get("gui", "delete-chunk.png"));
     }
 
     // Java can't list files inside the JAR, so we copy them to a temp folder.

@@ -147,38 +147,46 @@ public class RegionRenderer {
             for (int z = 0; z < 512; z++) {
                 int arrayIndex = (x << 9) + z;
 
-                if(isMeshed[arrayIndex]) {
+                if(isMeshed[arrayIndex]) { // The block is already meshed, skip it
                     continue;
                 }
 
                 BlockTexture texture = getTextureLayer(x, z, layer);
                 Biome biome = getBiome(x, z, layer);
+                boolean isDeleted = mapViewerRegion.isChunkDeleted(x >> 4, z >> 4);
                 if(texture == null || biome == null) continue; // Invisible block
 
-                isMeshed[arrayIndex] = true;
-                int endX = x + 1;
+                isMeshed[arrayIndex] = true; // We're going to mesh this block
+                int endX = x + 1; // We just meshed the block at x, z, so we can start at x + 1
 
-                while (endX < 512 && texture.equals(getTextureLayer(endX, z, layer)) && biome.equals(getBiome(endX, z, layer))) {
+                // Find the max x where the blocks are the same starting from x, z
+                while (endX < 512 &&
+                        texture.equals(getTextureLayer(endX, z, layer)) &&
+                        biome.equals(getBiome(endX, z, layer)) &&
+                        isDeleted == mapViewerRegion.isChunkDeleted(endX >> 4, z >> 4)) {
                     isMeshed[(endX << 9) + z] = true;
                     endX++;
                 }
-                endX -= 1;
+                endX -= 1; // Since it's a while loop, endX will be 1 higher than the last block that was the same
 
-                int endZ = Integer.MAX_VALUE;
-                for (int deltaX = x; deltaX <= endX; deltaX++) {
+                // We're going to try to find the highest possible z value where blocks are all the same
+                int endZ = 512;
+                for (int deltaX = x; deltaX <= endX; deltaX++) { // For each block on the x-axis we found
                     int foundZ = z;
-                    for (int deltaZ = z + 1; deltaZ < 512; deltaZ++) {
+                    for (int deltaZ = z + 1; deltaZ < endZ; deltaZ++) { // Loop trough every z block on the x-axis
                         int index = (deltaX << 9) + deltaZ;
-                        if(isMeshed[index]) break;
-                        if(texture.equals(getTextureLayer(deltaX, deltaZ, layer)) && biome.equals(getBiome(deltaX, deltaZ, layer))) {
-                            foundZ = deltaZ;
+                        if(isMeshed[index]) break; // If we already meshed this block, we stop searching
+                        if(texture.equals(getTextureLayer(deltaX, deltaZ, layer)) &&
+                                biome.equals(getBiome(deltaX, deltaZ, layer)) &&
+                                isDeleted == mapViewerRegion.isChunkDeleted(deltaX >> 4, deltaZ >> 4)) {
+                            foundZ = deltaZ; // If the block is the same, we update the foundZ value
                         } else {
-                            break;
+                            break; // They're not the same, we can't continue searching
                         }
                     }
 
                     if(foundZ < endZ) {
-                        endZ = foundZ;
+                        endZ = foundZ; // If we found a lower z value, we update the endZ value
                     }
                 }
 
@@ -188,7 +196,7 @@ public class RegionRenderer {
                     }
                 }
 
-                addBlockAtRelativePos(vertices, renderedSquares + createdSquares, x, z, endX, endZ, texture, biome);
+                addBlockAtRelativePos(vertices, renderedSquares + createdSquares, x, z, endX, endZ, texture, biome, isDeleted);
                 createdSquares++;
             }
         }
@@ -204,7 +212,9 @@ public class RegionRenderer {
         return mapViewerRegion.getMapViewerBiome(x, z, layer);
     }
 
-    private void addBlockAtRelativePos(float[] vertices, int renderedSquares, int relativeStartX, int relativeStartZ, int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome) {
+    private void addBlockAtRelativePos(float[] vertices, int renderedSquares, int relativeStartX, int relativeStartZ,
+                                       int relativeEndX, int relativeEndZ, BlockTexture blockTexture, Biome biome,
+                                       boolean isDeleted) {
         relativeStartX = mapViewerRegion.getRegionPos().x() * 512 + relativeStartX;
         relativeStartZ = mapViewerRegion.getRegionPos().z() * 512 + relativeStartZ;
         relativeEndX = mapViewerRegion.getRegionPos().x() * 512 + relativeEndX;
@@ -241,7 +251,7 @@ public class RegionRenderer {
             vertices[offset + 1] = yPos + (yAdd * ((relativeEndZ - relativeStartZ) + 1) * 16);
 
             vertices[offset + 2] = Float.intBitsToFloat(color);
-            vertices[offset + 3] = biome.id();
+            vertices[offset + 3] = Float.intBitsToFloat(biome.id() + (isDeleted ? (1 << 30) : 0));
 
             vertices[offset + 4] = UV_POSITIONS[i * 2] * ((relativeEndX - relativeStartX) + 1);
             vertices[offset + 5] = UV_POSITIONS[i * 2 + 1] * ((relativeEndZ - relativeStartZ) + 1);

@@ -101,7 +101,8 @@ public class AmethystSaver {
     private void writeRegion(RegionFile regionFile, ProgressTracker progressTracker) throws IOException {
         for (int x = 0; x < 32; x++) {
             for (int z = 0; z < 32; z++) {
-                Chunk chunk = regionFile.getChunk(x, z);
+                boolean isChunkDeleted = mapViewerWorld.getRegion(regionFile.getRegionPos().x(), regionFile.getRegionPos().z()).isChunkDeleted(x, z);
+                Chunk chunk = isChunkDeleted ? null : regionFile.getChunk(x, z);
                 if(chunk == null || chunk.isEmpty()) {
                     progressTracker.increment("Saved " + progressTracker.getCurrent() + " out of " + progressTracker.getTotal() + " chunks (" +
                             (int) (progressTracker.getProgress() * 100) + "%)");
