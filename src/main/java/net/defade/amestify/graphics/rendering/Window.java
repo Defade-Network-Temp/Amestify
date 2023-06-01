@@ -55,6 +55,7 @@ public class Window {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_LINE_SMOOTH); // Enables antialiasing for lines
 
         glViewport(0, 0, width, height);
         imGUILayer.initImGui();
