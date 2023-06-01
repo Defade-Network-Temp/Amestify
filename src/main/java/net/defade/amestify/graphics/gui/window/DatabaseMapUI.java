@@ -4,6 +4,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import imgui.ImGui;
+import imgui.flag.ImGuiCol;
 import imgui.type.ImString;
 import net.defade.amestify.database.MongoConnector;
 import net.defade.amestify.graphics.gui.Viewer;
@@ -26,6 +27,9 @@ public class DatabaseMapUI extends UIComponent {
 
     private GameMap modifyingMap = null;
     private final ImString mapName = new ImString();
+
+    private GameMap mapAwaitingDeleteConfirm = null;
+    private boolean deletingMap = false;
 
     public DatabaseMapUI(Viewer viewer) {
         this.viewer = viewer;
@@ -61,6 +65,31 @@ public class DatabaseMapUI extends UIComponent {
                             renameMap(map, mapName.get() + ".amethyst");
                             modifyingMap = null;
                         }
+                    } else if (deletingMap) {
+                        ImGui.text("     " + map.name);
+                        ImGui.sameLine();
+
+                        ImGui.pushStyleColor(ImGuiCol.Text, 215, 45, 45, 255);
+                        ImGui.text("Deleting...");
+                        ImGui.popStyleColor();
+                    } else if(map.equals(mapAwaitingDeleteConfirm)) {
+                        ImGui.text("     " + map.name);
+                        ImGui.sameLine();
+
+                        ImGui.pushStyleColor(ImGuiCol.Button, 15, 150, 15, 255);
+                        if(ImGui.button("Delete")) {
+                            deletingMap = true;
+                            deleteMap();
+                        }
+                        ImGui.popStyleColor();
+
+                        ImGui.sameLine();
+
+                        ImGui.pushStyleColor(ImGuiCol.Button, 215, 45, 45, 255);
+                        if(ImGui.button("Cancel")) {
+                            mapAwaitingDeleteConfirm = null;
+                        }
+                        ImGui.popStyleColor();
                     } else {
                         ImGui.text("     " + map.name);
                         ImGui.sameLine();
@@ -76,9 +105,15 @@ public class DatabaseMapUI extends UIComponent {
                         ImGui.popID();
 
                         ImGui.sameLine();
+                        ImGui.pushID(map.name + " delete");
+                        if(ImGui.imageButton(Assets.DELETE_ICON.getTextureId(), imageSize, imageSize)) {
+                            mapAwaitingDeleteConfirm = map;
+                        }
+                        ImGui.popID();
+
+                        ImGui.sameLine();
                         ImGui.pushID(map.name + " open");
                         if(ImGui.imageButton(Assets.OPEN_ICON.getTextureId(), imageSize, imageSize)) {
-                            System.out.println(map);
                             viewer.getDialog(DatabaseLoaderDialog.class).open(map.id);
                         }
                         ImGui.popID();
@@ -112,6 +147,17 @@ public class DatabaseMapUI extends UIComponent {
             bucket.rename(map.id, newName);
 
             fetchSavedMaps();
+        });
+    }
+
+    private void deleteMap() {
+        MongoConnector.THREAD_POOL.execute(() -> {
+            GridFSBucket bucket = GridFSBuckets.create(viewer.getMongoConnector().getMongoDatabase(), "maps");
+            bucket.delete(mapAwaitingDeleteConfirm.id);
+
+            fetchSavedMaps();
+            deletingMap = false;
+            mapAwaitingDeleteConfirm = null;
         });
     }
 

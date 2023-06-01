@@ -25,6 +25,7 @@ public class Assets {
     public static Texture EDIT_ICON;
     public static Texture DONE_ICON;
     public static Texture OPEN_ICON;
+    public static Texture DELETE_ICON;
     public static Texture GRID_SELECTION_ICON;
     public static Texture BLOCK_BIOME_EDITOR_ICON;
     public static Texture DELETE_CHUNK_ICON;
@@ -48,6 +49,7 @@ public class Assets {
         EDIT_ICON = new Texture(Paths.get("gui", "edit.png"));
         DONE_ICON = new Texture(Paths.get("gui", "done.png"));
         OPEN_ICON = new Texture(Paths.get("gui", "open.png"));
+        DELETE_ICON = new Texture(Paths.get("gui", "delete.png"));
         GRID_SELECTION_ICON = new Texture(Paths.get("gui", "grid-selection.png"));
         BLOCK_BIOME_EDITOR_ICON = new Texture(Paths.get("gui", "block-biome-editor.png"));
         DELETE_CHUNK_ICON = new Texture(Paths.get("gui", "delete-chunk.png"));
