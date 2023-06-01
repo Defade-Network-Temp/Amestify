@@ -59,7 +59,7 @@ public class AmethystMapLoader implements WorldLoader {
                 for (RegionPos regionPos : regionChunksIndexes.keySet()) {
                     CompletableFuture<RegionFile> regionFuture = loadRegion(progressTracker, mapViewerWorld, regionPos);
 
-                    regionFuture.whenComplete((regionFile, throwable) -> {
+                    regionFuture = regionFuture.whenComplete((regionFile, throwable) -> {
                         if (throwable != null) {
                             future.completeExceptionally(throwable);
                         } else {
@@ -78,6 +78,10 @@ public class AmethystMapLoader implements WorldLoader {
                         try {
                             file.close();
                         } catch (IOException ignored) { }
+
+                        file = null;
+                        biomes.clear();
+                        regionChunksIndexes.clear();
                     }
                 });
 
