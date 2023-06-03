@@ -154,7 +154,7 @@ public class RegionRenderer {
                 BlockTexture texture = getTextureLayer(x, z, layer);
                 Biome biome = getBiome(x, z, layer);
                 boolean isDeleted = mapViewerRegion.isChunkDeleted(x >> 4, z >> 4);
-                if(texture == null || biome == null) continue; // Invisible block
+                if(texture == null || texture.isIgnored() || biome == null) continue; // Invisible block
 
                 isMeshed[arrayIndex] = true; // We're going to mesh this block
                 int endX = x + 1; // We just meshed the block at x, z, so we can start at x + 1
