@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 val lwjglVersion = "3.3.1"
 val jomlVersion = "1.10.5"
 
@@ -54,4 +56,8 @@ tasks.withType(Jar::class) {
         attributes["Manifest-Version"] = "1.0"
         attributes["Main-Class"] = "net.defade.amestify.Main"
     }
+}
+
+tasks.withType<ShadowJar> {
+    minimize()
 }
