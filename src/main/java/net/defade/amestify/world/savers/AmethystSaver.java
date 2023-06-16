@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -165,7 +166,21 @@ public class AmethystSaver {
             dataOutputStream.write(skyLightData);
         }
 
-        dataOutputStream.writeInt(0); //TODO: Save block entities
+        Map<Integer, String> blockEntities = chunk.getBlockEntities();
+        dataOutputStream.writeInt(blockEntities.size());
+
+        for (Map.Entry<Integer, String> blockEntity : blockEntities.entrySet()) {
+            dataOutputStream.writeInt(blockEntity.getKey());
+
+            byte blockDataMask = 0;
+            blockDataMask = (byte) (blockDataMask | 1); // We have NBT data
+            blockDataMask |= 2; // Forcefully enable the minestom handler.
+            // If minestom doesn't have one, it will just be ignored.
+
+            dataOutputStream.write(blockDataMask);
+            dataOutputStream.writeUTF(blockEntity.getValue());
+        }
+
         totalChunks.getAndIncrement();
 
         return byteArrayOutputStream.toByteArray();
