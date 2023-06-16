@@ -75,10 +75,15 @@ public class AmethystChunk extends Chunk {
 
         int blockEntitiesAmount = buffer.getInt();
         for (int i = 0; i < blockEntitiesAmount; i++) {
-            buffer.position(buffer.position() + 6);
-            if ((buffer.get() & 1) == 1) {
-                buffer.position(buffer.getShort());
-            }
+            int blockEntityPos = buffer.getInt();
+
+            buffer.get(); // Skip the data mask
+
+            byte[] snbtData = new byte[buffer.getShort()];
+            buffer.get(snbtData);
+            String snbt = new String(snbtData);
+
+            blockEntities.put(blockEntityPos, snbt);
         }
 
         for (int x = 0; x < 16; x++) {

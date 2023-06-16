@@ -2,6 +2,7 @@ package net.defade.amestify.utils;
 
 import imgui.ImGui;
 import imgui.ImGuiStyle;
+import net.defade.amestify.world.chunk.Chunk;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -94,16 +95,27 @@ public class Utils {
         ImGui.text(text);
     }
 
-    public static long getChunkIndex(int chunkX, int chunkZ) {
-        return (((long) chunkX) << 32) | (chunkZ & 0xffffffffL);
-    }
-
     public static int getChunkCoordX(long index) {
         return (int) (index >> 32);
     }
 
     public static int getChunkCoordZ(long index) {
         return (int) index;
+    }
+
+    public static int getBlockIndex(int x, int y, int z) {
+        x = x % Chunk.CHUNK_SECTION_SIZE;
+        z = z % Chunk.CHUNK_SECTION_SIZE;
+
+        int index = x & 0xF; // 4 bits
+        if (y > 0) {
+            index |= (y << 4) & 0x07FFFFF0; // 23 bits (24th bit is always 0 because y is positive)
+        } else {
+            index |= ((-y) << 4) & 0x7FFFFF0; // Make positive and use 23 bits
+            index |= 1 << 27; // Set negative sign at 24th bit
+        }
+        index |= (z << 28) & 0xF0000000; // 4 bits
+        return index;
     }
 
     public static String convertFileSizeUnit(long bytes) {

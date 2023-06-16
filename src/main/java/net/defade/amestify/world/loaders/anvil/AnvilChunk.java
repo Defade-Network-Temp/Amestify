@@ -1,6 +1,7 @@
 package net.defade.amestify.world.loaders.anvil;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.defade.amestify.utils.Utils;
 import net.defade.amestify.world.Block;
 import net.defade.amestify.world.chunk.Chunk;
 import net.defade.amestify.world.chunk.Section;
@@ -12,6 +13,7 @@ import net.defade.amestify.world.chunk.palette.FlexiblePalette;
 import net.defade.amestify.world.chunk.palette.Palette;
 import net.querz.mca.CompressionType;
 import net.querz.nbt.io.NBTDeserializer;
+import net.querz.nbt.io.SNBTSerializer;
 import net.querz.nbt.tag.CompoundTag;
 import net.querz.nbt.tag.ListTag;
 import net.querz.nbt.tag.StringTag;
@@ -22,6 +24,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class AnvilChunk extends Chunk {
+    private static final SNBTSerializer SNBT_SERIALIZER = new SNBTSerializer();
+
     public AnvilChunk(MapViewerWorld mapViewerWorld, ChunkPos chunkPos, int minY, int maxY, CompressionType compressionType, InputStream inputStream) {
         super(mapViewerWorld, chunkPos, minY, maxY);
 
@@ -37,6 +41,7 @@ public class AnvilChunk extends Chunk {
 
         readSections(nbt.getListTag("sections"));
         readHeightmap(nbt);
+        readBlockEntities(nbt);
     }
 
     private void readSections(ListTag<?> sectionsNBT) {
@@ -91,6 +96,25 @@ public class AnvilChunk extends Chunk {
             int value = (int) ((packedHeightmap[longIndex] >> (subIndex * 9)) & mask);
 
             heightMap[i] = value;
+        }
+    }
+
+    private void readBlockEntities(CompoundTag nbt) {
+        ListTag<?> blockEntitiesNBT = nbt.getListTag("block_entities");
+        if(blockEntitiesNBT == null) return;
+
+        for (Tag<?> blockEntityUncasted : blockEntitiesNBT) {
+            CompoundTag blockEntity = (CompoundTag) blockEntityUncasted;
+
+            int x = blockEntity.getInt("x");
+            int y = blockEntity.getInt("y");
+            int z = blockEntity.getInt("z");
+
+            try {
+                blockEntities.put(Utils.getBlockIndex(x, y, z), SNBT_SERIALIZER.toString(blockEntity));
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
         }
     }
 

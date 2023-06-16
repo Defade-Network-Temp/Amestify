@@ -1,11 +1,12 @@
 package net.defade.amestify.world.chunk;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.defade.amestify.world.biome.Biome;
 import net.defade.amestify.world.pos.ChunkPos;
 import net.defade.amestify.world.viewer.MapViewerWorld;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Chunk {
     public static final int CHUNK_SECTION_SIZE = 16;
@@ -18,6 +19,8 @@ public abstract class Chunk {
 
     protected final List<Section> sections = new ArrayList<>();
     protected final int[] heightMap = new int[256];
+
+    protected final Int2ObjectOpenHashMap<String> blockEntities = new Int2ObjectOpenHashMap<>(0);
 
     protected Chunk(MapViewerWorld mapViewerWorld, ChunkPos chunkPos, int minY, int maxY) {
         this.mapViewerWorld = mapViewerWorld;
@@ -73,4 +76,7 @@ public abstract class Chunk {
         return heightMap[(x & 0xF) + ((z & 0xF) << 4)] + minY -1;
     }
 
+    public Map<Integer, String> getBlockEntities() {
+        return blockEntities;
+    }
 }
